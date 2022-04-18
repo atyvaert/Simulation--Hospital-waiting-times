@@ -3,6 +3,7 @@ class simulation():
     global inputFileName, D, amountOTSlotsPerDay, S, slotLength, lambaElective, meanTardiness, stdevTardiness, probNoShow, meanElectiveDuration, \
         stdevElectiveDuration, lambdaUrgent, probUrgentType, cumulativeProbUrgentType, meanUrgentDuration, stdevUrgentDuration, weightEl, weightUr, W, \
         R, d, s, w, r, rule;
+
     inputFileName = "/Users/wouterdewitte/Documents/1e Master Business Engineering_Data Analytics/Semester 2/Simulation Modelling and Analyses/Project/project SMA 2022 student code /input-S1-14.txt";
     D = 6; #number of days per week (NOTE: Sunday not included! so do NOT use to calculate appointment waiting time)
     amountOTSlotsPerDay = 10; #number of overtime slots per day
@@ -45,4 +46,36 @@ class simulation():
     def runOneSimulation(self):
         return 0;
     def runSimulations(self):
+        return 0;
+
+class Slot:
+    # Variables and parameters
+    global startTime, appTime, slotType, patientType;
+
+    # Functions
+
+class Patient():
+
+    # Initializing
+
+    def __init__(self, nr, patientType, scanType, callWeek, callDay, callTime, tardiness, isNoShow, duration):
+        self.nr = nr;
+        self.patientType = patientType;
+        self.scanType = scanType;
+        self.callWeek = callWeek;
+        self.callDay = callDay;
+        self.callTime = callTime;
+        self.scanWeek = -1;
+        self.scanDay = -1;
+        self.slotNr = -1;
+        self.appTime = -1;
+        self.tardiness = tardiness;
+        self.isNoShow = isNoShow;
+        self.duration = duration;
+        self.scanTime = -1.0;
+
+    # Functions
+    def getAppWT(self):
+        return 0;
+    def getScanWT(self):
         return 0;
