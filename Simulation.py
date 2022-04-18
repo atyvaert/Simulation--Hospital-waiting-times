@@ -1,1 +1,1 @@
-# hey
+print("hello world")
