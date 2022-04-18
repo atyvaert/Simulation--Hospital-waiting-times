@@ -76,6 +76,20 @@ class Patient():
 
     # Functions
     def getAppWT(self):
-        return 0;
+        if self.scanTime != -1:
+            return (((self.scanWeek - self.callWeek)*7 + self.scanDay - self.callDay)*24 + self.appTime - self.callTime); # in hours
+        else:
+            print("CAN NOT CALCULATE APPOINTMENT WT OF PATIENT", self.nr);
+            exit(1);
+
     def getScanWT(self):
-        return 0;
+        if self.scanTime != 0:
+            wt = 0;
+            if self.patientType == 1:
+                wt = self.scanTime - (self.appTime + self.tardiness);
+            else:
+                wt = self.scanTime - self.callTime;
+            return max(0.0,wt);
+        else:
+            print("CAN NOT CALCULATE SCAN WT OF PATIENT", self.nr); # in hours
+            exit(1);
