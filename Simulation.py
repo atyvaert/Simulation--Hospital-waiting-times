@@ -31,8 +31,26 @@ class simulation():
     # Functions
     def setWeekSchedule(self):
         return 0;
+
     def resetSystem(self):
-        return 0;
+        # reset all variables related to 1 replication
+        patients.clear();
+        avgElectiveAppWT = 0;
+        avgElectiveScanWT = 0;
+        avgUrgentScanWT = 0;
+        avgOT = 0;
+        numberOfElectivePatientsPlanned = 0;
+        numberOfUrgentPatientsPlanned = 0;
+        
+        for w in movingAvgElectiveAppWT:
+            movingAvgElectiveAppWT[w] = 0;
+        for w in movingAvgElectiveScanWT:
+            movingAvgElectiveScanWT[w] = 0;
+        for w in movingAvgUrgentScanWT:
+            movingAvgUrgentScanWT[w] = 0;
+        for w in movingAvgOT:
+            movingAvgOT[w] = 0;
+        
     def getRandomScanType(self):
         return 0;
     def generatePatients(self):
