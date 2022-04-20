@@ -11,11 +11,18 @@ class Slot():
     # Variables and parameters
     global startTime, appTime, slotType, patientType;
 
+    def __init__(self, startTime, appTime, slotType, patientType):
+        self.startTime = startTime;
+        self.appTime = appTime;
+        self.slotType = slotType;
+        self.patientType = patientType;
     # Functions
 
 class Patient():
 
     # Initializing
+
+    global nr, patientType, scanType, callWeek, callDay, callTime, tardiness, isNoShow, duration
 
     def __init__(self, nr, patientType, scanType, callWeek, callDay, callTime, tardiness, isNoShow, duration):
         self.nr = nr;
