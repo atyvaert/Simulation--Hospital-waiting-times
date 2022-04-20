@@ -1,3 +1,4 @@
+from random import seed
 import numpy as np
 import math
 from collections import defaultdict
@@ -112,7 +113,9 @@ class simulation():
 
     # Functions
     def setWeekSchedule(self):
+        # Read and set the slot types (0=none, 1=elective, 2=urgent within normal working hours)
         return 0;
+        
 
     def resetSystem(self):
         # reset all variables related to 1 replication
@@ -136,10 +139,12 @@ class simulation():
     def getRandomScanType(self):
         r = np.random.uniform(0,1);
         type = -1;
-        #for (int i = 0; i < 5 & & type == -1; i++){
-        #    if (r < cumulativeProbUrgentType[i]){type = i;}
-        #}
-        #return type;
+        for x in range(0, 5):
+            if type != -1:
+                break
+            if r < cumulativeProbUrgentType[x]:
+                type = x;
+        return type ;
 
     def generatePatients(self):
         global arrivalTimeNext, counter, patientType, scanType, endTime, callTime, tardiness, duration, lambdaa, noShow, lambdaElective, lambdaUrgent;
@@ -184,7 +189,18 @@ class simulation():
 
 
     def getNextSlotNrFromTime(self, day, patientType, time):
-        return 0;
+        found = False;
+        slotNr = -1;
+        for s in range(0,S):
+            if found:
+                break 
+            if self.weekSchedule[day][s].appTime > time and patientType == self.weekSchedule[day][s].patientType:
+                found = True;
+                slotNr = s;
+        if(found == False):
+            print("NO SLOT EXISTS DURING TIME %.2f \n", time);
+            exit(0);
+        return slotNr;
 
     def schedulePatients(self):
         return 0;
@@ -196,4 +212,33 @@ class simulation():
         return 0;
 
     def runSimulations(self):
-        return 0;
+        electiveAppWt = 0;
+        electiveScanWT = 0;
+        urgentScanWT = 0;
+        OT = 0;
+        Ov = 0;
+        self.setWeekschedule(); #set cyclic slot schedule based on given input file
+        print("r \t elAppWT \t elScanWT \t urScanWT \t OT \t OV \n");
+        # run R replications 
+        for r in range(0,R):
+            self.resetSystem();      #reset all variables related to 1 replication
+            seed;               #set seed value for random value generator
+            self.runOneSimulation(); #run 1 simulation / replication
+            electiveAppWT = electiveAppWT + avgElectiveAppWT;
+            electiveScanWT = electiveScanWT + avgElectiveScanWT;
+            urgentScanWT = avgUrgentScanWT + urgentScanWT;
+            OT = avgOT + OT;
+            OV = OV + (avgElectiveAppWT / weightEl + avgUrgentScanWT / weightUr);
+            print("%d \t %.2f \t %.2f \t %.2f \t %.2f \t %.2f \n", r, avgElectiveAppWT, avgElectiveScanWT, avgUrgentScanWT, avgOT, avgElectiveAppWT / weightEl + avgUrgentScanWT / weightUr);
+        electiveAppWT = electiveAppWT / R;
+        electiveScanWT = electiveScanWT / R;
+        urgentScanWT = urgentScanWT / R;
+        OT = OT / R;
+        OV = OV / R;
+        objectiveValue = electiveAppWT / weightEl + urgentScanWT / weightUr;
+        print("Avg.: \t %.2f \t %.2f \t %.2f \t %.2f \t %.2f \n", electiveAppWT, electiveScanWT, urgentScanWT, OT, objectiveValue);
+
+        # print results
+        # inputFileName = "/Users/wouterdewitte/Documents/1e Master Business Engineering_Data Analytics/Semester 2/Simulation Modelling and Analyses/Project/project SMA 2022 student code /input-S1-14.txt";
+        # todo: print the output you need to a .txt file
+        #fclose(file);
