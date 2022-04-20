@@ -112,7 +112,9 @@ class simulation():
 
     # Functions
     def setWeekSchedule(self):
+        # Read and set the slot types (0=none, 1=elective, 2=urgent within normal working hours)
         return 0;
+        
 
     def resetSystem(self):
         # reset all variables related to 1 replication
@@ -147,7 +149,18 @@ class simulation():
         return 0;
 
     def getNextSlotNrFromTime(self, day, patientType, time):
-        return 0;
+        found = False;
+        slotNr = -1;
+        for s in range(0,S):
+            if found:
+                break 
+            if weekSchedule[day][s].appTime > time and patientType == weekSchedule[day][s].patientType:
+                found = True;
+                slotNr = s;
+        if(found == False):
+            print("NO SLOT EXISTS DURING TIME %.2f \n", time);
+            exit(0);
+        return slotNr;
 
     def schedulePatients(self):
         return 0;
