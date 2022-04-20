@@ -5,7 +5,7 @@ from scipy.stats import t as T_value
 from scipy.stats import norm
 import matplotlib.pyplot as plt
 import time
-
+from Helper import *;
 
 class Slot():
     # Variables and parameters
@@ -60,9 +60,9 @@ class Patient():
             print("CAN NOT CALCULATE SCAN WT OF PATIENT", self.nr); # in hours
             exit(1);
 
-
 class simulation():
     inputFileName = "/Users/wouterdewitte/Documents/1e Master Business Engineering_Data Analytics/Semester 2/Simulation Modelling and Analyses/Project/project SMA 2022 student code /input-S1-14.txt";
+    global W, R, rule;
     W = 10;  # number of weeks to simulate = runlength
     R = 1;  # number of replications
     rule = 1;
@@ -83,16 +83,16 @@ class simulation():
     movingAvgOT = [W];
 
     # Variables and parameters
-    global inputFileName, D, amountOTSlotsPerDay, S, slotLength, lambaElective, meanTardiness, stdevTardiness, probNoShow, meanElectiveDuration, \
-        stdevElectiveDuration, lambdaUrgent, probUrgentType, cumulativeProbUrgentType, meanUrgentDuration, stdevUrgentDuration, weightEl, weightUr, W, \
-        R, d, s, w, r, rule;
+    global inputFileName, D, amountOTSlotsPerDay, S, slotLength, lambdaElective, meanTardiness, stdevTardiness, probNoShow, meanElectiveDuration, \
+        stdevElectiveDuration, lambdaUrgent, probUrgentType, cumulativeProbUrgentType, meanUrgentDuration, stdevUrgentDuration, weightEl, weightUr, \
+        d, s, w, r;
 
     inputFileName = "/Users/wouterdewitte/Documents/1e Master Business Engineering_Data Analytics/Semester 2/Simulation Modelling and Analyses/Project/project SMA 2022 student code /input-S1-14.txt";
     D = 6;  # number of days per week (NOTE: Sunday not included! so do NOT use to calculate appointment waiting time)
     amountOTSlotsPerDay = 10;  # number of overtime slots per day
     S = 32 + amountOTSlotsPerDay;  # number of slots per day
     slotLength = 15.0 / 60.0;  # duration of a slot (in hours)
-    lambaElective = 28.345;
+    lambdaElective = 28.345;
     meanTardiness = 0;
     stdevTardiness = 2.5;
     probNoShow = 0.02;
@@ -142,7 +142,46 @@ class simulation():
         #return type;
 
     def generatePatients(self):
-        return 0;
+        global arrivalTimeNext, counter, patientType, scanType, endTime, callTime, tardiness, duration, lambdaa, noShow, lambdaElective, lambdaUrgent;
+        counter = 0; # total number of patients so far
+        for w in W:
+            for d in D: #not on Sunday
+                #generate ELECTIVE patients for this day
+                if d < D-1: #not on Saturday either
+                    arrivalTimeNext = 8 + Exponential_distribution(lambdaElective) * (17-8)
+                    while arrivalTimeNext < 17: # desk open from 8h until 17h
+                        patientType = 1; # elective
+                        scanType = 0;  # no scan type
+                        callTime = arrivalTimeNext; # set call time, i.e. arrival event time
+                        tardiness = Normal_distribution(meanTardiness, stdevTardiness) / 60.0; # in practice this is not known yet at time  of call
+                        noShow = Bernouilli_distribution(probNoShow); # in practice this is not known yet at time of call
+                        duration = Normal_distribution(meanElectiveDuration, stdevElectiveDuration) / 60.0; # in practice this is not known yet at time of call
+                        patient =  Patient(counter, patientType, scanType, w, d, callTime, tardiness, noShow, duration);
+                        patients.append(patient);
+                        counter = counter + 1;
+                        arrivalTimeNext = arrivalTimeNext + Exponential_distribution(lambdaElective) * (17 - 8); # arrival time of next patient (if < 17h)
+
+                # generate URGENT patients for this day
+                if ((d == 3) | (d == 5)):
+                    lambda_local = lambdaUrgent[1]; # on Wed and Sat, only half a day!
+                    endTime = 12;
+                else:
+                    lambda_local = lambdaUrgent[1];
+                    endTime = 17;
+                arrivalTimeNext = 8 + Exponential_distribution(lambda_local) * (endTime-8);
+                while arrivalTimeNext < endTime: # desk open from 8h until 17h
+                    patientType = 2; # urgent
+                    scanType = self.getRandomScanType(); # set scan type
+                    callTime = arrivalTimeNext; # set arrival time, i.e. arrival event time
+                    tardiness = 0; # urgent patients have an arrival time = arrival event time
+                    noShow = False; # urgent patients are never no-show
+                    duration = Normal_distribution(meanUrgentDuration[scanType], stdevUrgentDuration[scanType]) / 60.0; # in practice this is not known yet at time of arrival
+                    patient = Patient(counter, patientType, scanType, w, d, callTime, tardiness, noShow, duration);
+                    patients.append(patient);
+                    counter = counter + 1;
+                    arrivalTimeNext = arrivalTimeNext + Exponential_distribution(lambda_local) * (endTime-8); # arrival time of next patient (if < 17h)
+
+
 
     def getNextSlotNrFromTime(self, day, patientType, time):
         return 0;
