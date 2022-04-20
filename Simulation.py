@@ -1,3 +1,12 @@
+import numpy as np
+import math
+from collections import defaultdict
+from scipy.stats import t as T_value
+from scipy.stats import norm
+import matplotlib.pyplot as plt
+import time
+import csv
+
 class Slot():
     # Variables and parameters
     global startTime, appTime, slotType, patientType;
@@ -118,7 +127,12 @@ class simulation():
             movingAvgOT[w] = 0;
 
     def getRandomScanType(self):
-        return 0;
+        r = np.random.uniform(0,1);
+        type = -1;
+        #for (int i = 0; i < 5 & & type == -1; i++){
+        #    if (r < cumulativeProbUrgentType[i]){type = i;}
+        #}
+        #return type;
 
     def generatePatients(self):
         return 0;
