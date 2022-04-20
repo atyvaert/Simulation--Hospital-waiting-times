@@ -5,7 +5,7 @@ from scipy.stats import t as T_value
 from scipy.stats import norm
 import matplotlib.pyplot as plt
 import time
-import csv
+
 
 class Slot():
     # Variables and parameters
