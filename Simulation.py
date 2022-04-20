@@ -136,10 +136,12 @@ class simulation():
     def getRandomScanType(self):
         r = np.random.uniform(0,1);
         type = -1;
-        #for (int i = 0; i < 5 & & type == -1; i++){
-        #    if (r < cumulativeProbUrgentType[i]){type = i;}
-        #}
-        #return type;
+        for x in range(0, 5):
+            if type != -1:
+                break
+            if r < cumulativeProbUrgentType[x]:
+                type = x;
+        return type ;
 
     def generatePatients(self):
         return 0;
