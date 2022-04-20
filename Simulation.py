@@ -142,7 +142,7 @@ class simulation():
         #return type;
 
     def generatePatients(self):
-        global arrivalTimeNext, counter, patientType, scanType, endTime, callTime, tardiness, duration, lambdaa, noShow, lambdaElective;
+        global arrivalTimeNext, counter, patientType, scanType, endTime, callTime, tardiness, duration, lambdaa, noShow, lambdaElective, lambdaUrgent;
         counter = 0; # total number of patients so far
         for w in W:
             for d in D: #not on Sunday
@@ -157,15 +157,29 @@ class simulation():
                         noShow = Bernouilli_distribution(probNoShow); # in practice this is not known yet at time of call
                         duration = Normal_distribution(meanElectiveDuration, stdevElectiveDuration) / 60.0; # in practice this is not known yet at time of call
                         patient =  Patient(counter, patientType, scanType, w, d, callTime, tardiness, noShow, duration);
-                        patients.push_back(patient);
+                        patients.append(patient);
                         counter = counter + 1;
                         arrivalTimeNext = arrivalTimeNext + Exponential_distribution(lambdaElective) * (17 - 8); # arrival time of next patient (if < 17h)
 
                 # generate URGENT patients for this day
                 if ((d == 3) | (d == 5)):
-                    lambda = lambdaUrgent[1];
-
-
+                    lambda_local = lambdaUrgent[1]; # on Wed and Sat, only half a day!
+                    endTime = 12;
+                else:
+                    lambda_local = lambdaUrgent[1];
+                    endTime = 17;
+                arrivalTimeNext = 8 + Exponential_distribution(lambda_local) * (endTime-8);
+                while arrivalTimeNext < endTime: # desk open from 8h until 17h
+                    patientType = 2; # urgent
+                    scanType = self.getRandomScanType(); # set scan type
+                    callTime = arrivalTimeNext; # set arrival time, i.e. arrival event time
+                    tardiness = 0; # urgent patients have an arrival time = arrival event time
+                    noShow = False; # urgent patients are never no-show
+                    duration = Normal_distribution(meanUrgentDuration[scanType], stdevUrgentDuration[scanType]) / 60.0; # in practice this is not known yet at time of arrival
+                    patient = Patient(counter, patientType, scanType, w, d, callTime, tardiness, noShow, duration);
+                    patients.append(patient);
+                    counter = counter + 1;
+                    arrivalTimeNext = arrivalTimeNext + Exponential_distribution(lambda_local) * (endTime-8); # arrival time of next patient (if < 17h)
 
 
 
