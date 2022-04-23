@@ -215,6 +215,7 @@ class simulation():
         return 0
 
     def runSimulations(self):
+        global avgOT, avgElectiveAppWT, avgElectiveScanWT, avgUrgentScanWT
         electiveAppWT = 0
         electiveScanWT = 0
         urgentScanWT = 0
