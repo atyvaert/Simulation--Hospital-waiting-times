@@ -1,7 +1,7 @@
 from random import seed
 from Helper import *
 import numpy as np
-
+import pandas as pd
 
 class Slot():
     # Variables and parameters
@@ -221,7 +221,9 @@ class simulation():
         OT = 0
         OV = 0
         self.setWeekSchedule()  # set cyclic slot schedule based on given input file
-        print("r \t elAppWT \t elScanWT \t urScanWT \t OT \t OV \n")
+        column_names = ["r", "elAppWT", "elScanWT", "urScanWT", "OT", "OV"]
+        output = pd.DataFrame(columns=column_names)
+        #print("r \t elAppWT \t elScanWT \t urScanWT \t OT \t OV \n")
         # run R replications 
         for r in range(0, R):
             self.resetSystem()  # reset all variables related to 1 replication
@@ -232,16 +234,25 @@ class simulation():
             urgentScanWT = avgUrgentScanWT + urgentScanWT
             OT = avgOT + OT
             OV = OV + (avgElectiveAppWT / weightEl + avgUrgentScanWT / weightUr)
-            print("%d \t %.2f \t %.2f \t %.2f \t %.2f \t %.2f \n", r, avgElectiveAppWT, avgElectiveScanWT,
-                  avgUrgentScanWT, avgOT, avgElectiveAppWT / weightEl + avgUrgentScanWT / weightUr)
+            values_to_add = {'r': r, 'elAppWT': avgElectiveAppWT, 'elScanWT': avgElectiveScanWT, 'urScanWT': avgUrgentScanWT, 'OT': avgOT, 'OV': avgElectiveAppWT / weightEl + avgUrgentScanWT / weightUr}
+            row_to_add = pd.Series(values_to_add, name="run " + str(r))
+            output = output.append(row_to_add)
+            #print("%d \t %.2f \t %.2f \t %.2f \t %.2f \t %.2f \n", r, avgElectiveAppWT, avgElectiveScanWT,
+             #     avgUrgentScanWT, avgOT, avgElectiveAppWT / weightEl + avgUrgentScanWT / weightUr)
         electiveAppWT = electiveAppWT / R
         electiveScanWT = electiveScanWT / R
         urgentScanWT = urgentScanWT / R
         OT = OT / R
         OV = OV / R
         objectiveValue = electiveAppWT / weightEl + urgentScanWT / weightUr
-        print("Avg.: \t %.2f \t %.2f \t %.2f \t %.2f \t %.2f \n", electiveAppWT, electiveScanWT, urgentScanWT, OT,
-              objectiveValue)
+        values_to_add = {'r': r, 'elAppWT': electiveAppWT, 'elScanWT': electiveScanWT,
+                         'urScanWT': urgentScanWT, 'OT': OT,
+                         'OV': objectiveValue}
+        row_to_add = pd.Series(values_to_add, name="Average")
+        output = output.append(row_to_add)
+        print(output)
+        #print("Avg.: \t %.2f \t %.2f \t %.2f \t %.2f \t %.2f \n", electiveAppWT, electiveScanWT, urgentScanWT, OT,
+         #     objectiveValue)
 
         # print results
         # inputFileName = "/Users/wouterdewitte/Documents/1e Master Business Engineering_Data Analytics/Semester 2/Simulation Modelling and Analyses/Project/project SMA 2022 student code /input-S1-14.txt";
