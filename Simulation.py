@@ -90,7 +90,7 @@ class simulation():
     movingAvgOT = [W]
 
     # Variables and parameters
-    inputFileName = "/Users/wouterdewitte/Documents/1e Master Business Engineering_Data Analytics/Semester 2/Simulation Modelling and Analyses/Project/project SMA 2022 student code /input-S1-14.txt"
+    inputFileName = "../GitHub/Simulation/data"
     D = 6  # number of days per week (NOTE: Sunday not included! so do NOT use to calculate appointment waiting time)
     amountOTSlotsPerDay = 10  # number of overtime slots per day
     S = 32 + amountOTSlotsPerDay  # number of slots per day
