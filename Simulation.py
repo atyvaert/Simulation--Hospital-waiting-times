@@ -97,8 +97,6 @@ class simulation():
     numberOfElectivePatientsPlanned = 0
     numberOfUrgentPatientsPlanned = 0
 
-    print(D)
-    print(S)
     weekSchedule = np.zeros((D, S))
     for row in weekSchedule:
         for elem in row:
@@ -129,13 +127,13 @@ class simulation():
         numberOfUrgentPatientsPlanned = 0
 
         for w in movingAvgElectiveAppWT:
-            movingAvgElectiveAppWT[w] = 0
+            w = 0
         for w in movingAvgElectiveScanWT:
-            movingAvgElectiveScanWT[w] = 0
+            w = 0
         for w in movingAvgUrgentScanWT:
-            movingAvgUrgentScanWT[w] = 0
+            w = 0
         for w in movingAvgOT:
-            movingAvgOT[w] = 0
+            w = 0
 
     def getRandomScanType(self):
         r = np.random.uniform(0, 1)
