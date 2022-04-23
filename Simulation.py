@@ -64,12 +64,34 @@ class Patient():
 
 
 class simulation():
+    # Variables and parameters
+
     global inputFileName, D, amountOTSlotsPerDay, S, slotLength, lambdaElective, meanTardiness, stdevTardiness, probNoShow, meanElectiveDuration, \
         stdevElectiveDuration, lambdaUrgent, probUrgentType, cumulativeProbUrgentType, meanUrgentDuration, stdevUrgentDuration, weightEl, weightUr, \
         d, s, w, r, patients, patient, movingAvgElectiveAppWT, movingAvgElectiveScanWT, movingAvgUrgentScanWT, movingAvgOT, avgElectiveAppWT, avgElectiveScanWT, \
-        avgUrgentScanWT, avgOT, numberOfElectivePatientsPlanned, numberOfUrgentPatientsPlanned
+        avgUrgentScanWT, avgOT, numberOfElectivePatientsPlanned, numberOfUrgentPatientsPlanned, W, R, rule
+
+    inputFileName = "../GitHub/Simulation/data"
+    D = 6  # number of days per week (NOTE: Sunday not included! so do NOT use to calculate appointment waiting time)
+    amountOTSlotsPerDay = 10  # number of overtime slots per day
+    S = 32 + amountOTSlotsPerDay  # number of slots per day
+    slotLength = 15.0 / 60.0  # duration of a slot (in hours)
+    lambdaElective = 28.345
+    meanTardiness = 0
+    stdevTardiness = 2.5
+    probNoShow = 0.02
+    meanElectiveDuration = 15
+    stdevElectiveDuration = 3
+    lambdaUrgent = [2.5, 1.25]
+    probUrgentType = [0.7, 0.1, 0.1, 0.05, 0.05]
+    cumulativeProbUrgentType = [0.7, 0.8, 0.9, 0.95, 1.0]
+    meanUrgentDuration[5] = [15, 17.5, 22.5, 30, 30]
+    stdevUrgentDuration[5] = [2.5, 1, 2.5, 1, 4.5]
+    weightEl = 1.0 / 168.0  # objective weight elective
+    weightUr = 1.0 / 9.0  # objective weight urgent scan
+
     inputFileName = ".../input-S1-14.txt"
-    global W, R, rule
+    
     W = 10  # number of weeks to simulate = runlength
     R = 1  # number of replications
     rule = 1
@@ -89,25 +111,7 @@ class simulation():
     movingAvgUrgentScanWT = [W]
     movingAvgOT = [W]
 
-    # Variables and parameters
-    inputFileName = "../GitHub/Simulation/data"
-    D = 6  # number of days per week (NOTE: Sunday not included! so do NOT use to calculate appointment waiting time)
-    amountOTSlotsPerDay = 10  # number of overtime slots per day
-    S = 32 + amountOTSlotsPerDay  # number of slots per day
-    slotLength = 15.0 / 60.0  # duration of a slot (in hours)
-    lambdaElective = 28.345
-    meanTardiness = 0
-    stdevTardiness = 2.5
-    probNoShow = 0.02
-    meanElectiveDuration = 15
-    stdevElectiveDuration = 3
-    lambdaUrgent = [2.5, 1.25]
-    probUrgentType = [0.7, 0.1, 0.1, 0.05, 0.05]
-    cumulativeProbUrgentType = [0.7, 0.8, 0.9, 0.95, 1.0]
-    meanUrgentDuration[5] = [15, 17.5, 22.5, 30, 30]
-    stdevUrgentDuration[5] = [2.5, 1, 2.5, 1, 4.5]
-    weightEl = 1.0 / 168.0  # objective weight elective
-    weightUr = 1.0 / 9.0  # objective weight urgent scan
+
 
     # Functions
     def setWeekSchedule(self):
