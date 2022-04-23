@@ -45,8 +45,7 @@ class Patient():
     # Functions
     def getAppWT(self):
         if self.scanTime != -1:
-            return (((
-                                 self.scanWeek - self.callWeek) * 7 + self.scanDay - self.callDay) * 24 + self.appTime - self.callTime)  # in hours
+            return (((self.scanWeek - self.callWeek) * 7 + self.scanDay - self.callDay) * 24 + self.appTime - self.callTime)  # in hours
         else:
             print("CAN NOT CALCULATE APPOINTMENT WT OF PATIENT", self.nr)
             exit(1)
@@ -69,7 +68,7 @@ class simulation():
         stdevElectiveDuration, lambdaUrgent, probUrgentType, cumulativeProbUrgentType, meanUrgentDuration, stdevUrgentDuration, weightEl, weightUr, \
         d, s, w, r, patients, patient, movingAvgElectiveAppWT, movingAvgElectiveScanWT, movingAvgUrgentScanWT, movingAvgOT, avgElectiveAppWT, avgElectiveScanWT, \
         avgUrgentScanWT, avgOT, numberOfElectivePatientsPlanned, numberOfUrgentPatientsPlanned
-    inputFileName = "/Users/wouterdewitte/Documents/1e Master Business Engineering_Data Analytics/Semester 2/Simulation Modelling and Analyses/Project/project SMA 2022 student code /input-S1-14.txt"
+    inputFileName = ".../input-S1-14.txt"
     global W, R, rule
     W = 10  # number of weeks to simulate = runlength
     R = 1  # number of replications
