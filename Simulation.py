@@ -1,12 +1,6 @@
 from random import seed
-import numpy as np
-import math
-from collections import defaultdict
-from scipy.stats import t as T_value
-from scipy.stats import norm
-import matplotlib.pyplot as plt
-import time
 from Helper import *
+import numpy as np
 
 
 class Slot():
@@ -65,11 +59,11 @@ class Patient():
 
 class simulation():
     # Variables and parameters
-
     global inputFileName, D, amountOTSlotsPerDay, S, slotLength, lambdaElective, meanTardiness, stdevTardiness, probNoShow, meanElectiveDuration, \
         stdevElectiveDuration, lambdaUrgent, probUrgentType, cumulativeProbUrgentType, meanUrgentDuration, stdevUrgentDuration, weightEl, weightUr, \
         d, s, w, r, patients, patient, movingAvgElectiveAppWT, movingAvgElectiveScanWT, movingAvgUrgentScanWT, movingAvgOT, avgElectiveAppWT, avgElectiveScanWT, \
         avgUrgentScanWT, avgOT, numberOfElectivePatientsPlanned, numberOfUrgentPatientsPlanned, W, R, rule
+
 
     inputFileName = "../GitHub/Simulation/data"
     D = 6  # number of days per week (NOTE: Sunday not included! so do NOT use to calculate appointment waiting time)
@@ -85,13 +79,13 @@ class simulation():
     lambdaUrgent = [2.5, 1.25]
     probUrgentType = [0.7, 0.1, 0.1, 0.05, 0.05]
     cumulativeProbUrgentType = [0.7, 0.8, 0.9, 0.95, 1.0]
-    meanUrgentDuration[5] = [15, 17.5, 22.5, 30, 30]
-    stdevUrgentDuration[5] = [2.5, 1, 2.5, 1, 4.5]
+    meanUrgentDuration = [15, 17.5, 22.5, 30, 30]
+    stdevUrgentDuration = [2.5, 1, 2.5, 1, 4.5]
     weightEl = 1.0 / 168.0  # objective weight elective
     weightUr = 1.0 / 9.0  # objective weight urgent scan
 
     inputFileName = ".../input-S1-14.txt"
-    
+
     W = 10  # number of weeks to simulate = runlength
     R = 1  # number of replications
     rule = 1
@@ -103,9 +97,13 @@ class simulation():
     numberOfElectivePatientsPlanned = 0
     numberOfUrgentPatientsPlanned = 0
 
-    weekSchedule = Slot * [D]
-    for d in D:
-        weekSchedule[d] = Slot[S]
+    print(D)
+    print(S)
+    weekSchedule = np.zeros((D, S))
+    for row in weekSchedule:
+        for elem in row:
+            elem = Slot(0,0,0,0)
+    patients = []
     movingAvgElectiveAppWT = [W]
     movingAvgElectiveScanWT = [W]
     movingAvgUrgentScanWT = [W]
@@ -119,7 +117,8 @@ class simulation():
         return 0
 
     def resetSystem(self):
-        global avgElectiveAppWT, avgElectiveScanWT, avgUrgentScanWT, avgOT, numberOfElectivePatientsPlanned, numberOfUrgentPatientsPlanned
+        global avgElectiveAppWT, avgElectiveScanWT, avgUrgentScanWT, avgOT, numberOfElectivePatientsPlanned, numberOfUrgentPatientsPlanned, patients, \
+            movingAvgElectiveAppWT, movingAvgElectiveScanWT, movingAvgUrgentScanWT
         # reset all variables related to 1 replication
         patients.clear()
         avgElectiveAppWT = 0
@@ -223,7 +222,7 @@ class simulation():
         urgentScanWT = 0
         OT = 0
         OV = 0
-        self.setWeekschedule()  # set cyclic slot schedule based on given input file
+        self.setWeekSchedule()  # set cyclic slot schedule based on given input file
         print("r \t elAppWT \t elScanWT \t urScanWT \t OT \t OV \n")
         # run R replications 
         for r in range(0, R):
