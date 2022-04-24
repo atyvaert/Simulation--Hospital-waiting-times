@@ -1,4 +1,6 @@
+from pickle import FALSE
 from random import seed
+import random
 from Helper import *
 import numpy as np
 import pandas as pd
@@ -209,10 +211,102 @@ class simulation():
         return 0
 
     def sortPatientsOnAppTime(self):
-        return 0
+        patients.sort(key=lambda x: (x.scanWeek, x.scanDay, x.appTime, x.callWeek, x.callDay, x.callTime, -x.patientType))
+        i = 0
+        for patient in patients:
+            if patient.scanWeek == -1:
+                patients.insert(-1, patients.pop(i))
+        i += 1
 
     def runOneSimulation(self):
-        return 0
+        global prevWeek, prevDay, numberOfPatientsWeek, numberOfPatients, arrivalTime, wt, prevScanEndTime, prevIsNoShow
+        self.generatePatients() # create patient arrival events (elective patients call, urgent patients arrive at the hospital)
+        self.schedulePatients() # schedule urgent and elective patients in slots based on their arrival events => determine the appointment wait time
+        self.sortPatientsOnAppTime() # sort patients on their appointment time (unscheduled patients are grouped at the end of the list)
+        prevWeek = 0
+        prevDay = -1
+        numberOfPatientsWeek = [0,0]
+        numberOfPatients = [0,0]
+        prevScanEndTime = float(0)
+        prevIsNoShow = bool(False)
+
+        for patient in patients:
+            if patient.scanWeek == -1:
+                break # stop at the first unplanned patient because we then have visited all scheduled patients
+            arrivalTime = float(patient.appTime + patient.tardiness)
+
+            #Scan WT (only done for patients who actually show up)
+            if patient.isNoShow == False:
+                if (patient.scanWeek != prevWeek or patient.scanDay != prevDay):
+                    patient.scanTime = patient.arrivalTime
+                elif(prevIsNoShow == True):
+                    ## zal wel nog niet kloppen --> hangt af van Artur zijn invulling van zijn weekschedule
+                    patient.scanTime = max(weekSchedule[patient.scanDay][patient.slotNr].startTime, max(prevScanEndTime, patient.arrivalTime))
+                else:
+                    patient.scanTime = max(prevScanEndTime, patient.arrivalTime)
+                
+                wt = patient.getScanWT()
+                if(patient.pantientType == 1):
+                    movingAvgElectiveScanWT[patient.scanWeek] += wt
+                else:
+                    movingAvgUrgentScanWT[patient.scanWeek] += wt
+                
+                numberOfPatientsWeek[patient.patientType -1] +=1
+
+                if(patient.patientType == 1):
+                    avgElectiveScanWT += wt
+                else:
+                    avgUrgentScanWT += wt
+                
+                numberOfPatients[patient.patientType - 1] +=1
+
+            #Overtime
+            if(prevDay > -1 and prevDay != patient.scanDay):
+                if(prevDay == 3 or prevDay == 5):
+                    movingAvgOT[prevWeek] += max(0.0, prevScanEndTime - 13)
+                else:
+                    movingAvgOT[prevWeek] += max(0.0, prevScanEndTime - 17)
+                if(prevDay == 3 or prevDay == 5):
+                    avgOT += max(0.0, prevScanEndTime - 13)
+                else:
+                    avgOT += max(0.0, prevScanEndTime - 17)
+            
+            #Update moving averages if week ends
+            if(prevWeek != patient.scanWeek):
+                movingAvgElectiveScanWT[prevWeek] = movingAvgElectiveScanWT[prevWeek]/numberOfPatientsWeek[0]
+                movingAvgUrgentScanWT[prevWeek] = movingAvgUrgentScanWT[prevWeek]/numberOfPatientsWeek[1]
+                movingAvgOT = movingAvgOT[prevWeek] / D
+                numberOfPatientsWeek[0] = 0
+                numberOfPatientsWeek[1] = 0
+            
+            #set prev patient
+            if(patient.isNoShow == True):
+                prevIsNoShow = True
+                if(patient.scanWeek != prevWeek or patient.scanDay != prevDay):
+                    prevScanEndTime = weekSchedule[patient.scanDay][patient.slotNr].startTime
+            else:
+                prevScanEndTime = patient.scanTime + patient.duration
+                prevIsNoShow = False
+            prevWeek = patient.scanWeek
+            prevDay = patient.scanDay
+
+            #update moving averages of the last week
+            movingAvgElectiveScanWT[W-1] = movingAvgElectiveScanWT[W-1] / numberOfPatientsWeek[0]
+            movingAvgUrgentScanWT[W-1] = movingAvgUrgentScanWT[W-1] / numberOfPatientsWeek[1]
+            movingAvgOT[W-1] = movingAvgOT[W-1] / D
+    
+            #calculate objective values
+            avgElectiveScanWT = avgElectiveScanWT / numberOfPatients[0]
+            avgUrgentScanWT = avgUrgentScanWT / numberOfPatients[1]
+            avgOT = avgOT / (D * W)
+
+            # print moving avg (UIT C++ CODE)
+    # /*FILE *file = fopen("/Users/tinemeersman/Documents/project SMA 2022 student code /output-movingAvg.txt", "a"); // TODO: use your own directory
+    # fprintf(file,"week \t elAppWT \t elScanWT \t urScanWT \t OT \n");
+    # for(w = 0; w < W; w++){
+    #     fprintf(file, "%d \t %.2f \t %.2f \t %.2f \t %.2f \n", w, movingAvgElectiveAppWT[w], movingAvgElectiveScanWT[w], movingAvgUrgentScanWT[w], movingAvgOT[w]);
+    # }
+    # fclose(file);*/
 
     def runSimulations(self):
         global avgOT, avgElectiveAppWT, avgElectiveScanWT, avgUrgentScanWT
@@ -228,7 +322,7 @@ class simulation():
         # run R replications 
         for r in range(0, R):
             self.resetSystem()  # reset all variables related to 1 replication
-            seed  # set seed value for random value generator
+            random.seed(r)  # set seed value for random value generator
             self.runOneSimulation()  # run 1 simulation / replication
             electiveAppWT = electiveAppWT + avgElectiveAppWT
             electiveScanWT = electiveScanWT + avgElectiveScanWT
@@ -259,3 +353,7 @@ class simulation():
         # inputFileName = "/Users/wouterdewitte/Documents/1e Master Business Engineering_Data Analytics/Semester 2/Simulation Modelling and Analyses/Project/project SMA 2022 student code /input-S1-14.txt";
         # todo: print the output you need to a .txt file
         # fclose(file);
+
+if __name__ == "__main__":
+    testing = simulation()
+    testing.runSimulations()
