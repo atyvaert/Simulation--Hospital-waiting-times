@@ -4,14 +4,15 @@ import numpy as np
 import pandas as pd
 
 class Slot():
+    # all information about slots
     # Variables and parameters
     global startTime, appTime, slotType, patientType
 
     def __init__(self, startTime, appTime, slotType, patientType):
-        self.startTime = startTime
-        self.appTime = appTime
-        self.slotType = slotType
-        self.patientType = patientType
+        self.startTime = startTime      # the actual start time independent of scheduling rule
+        self.appTime = appTime          # time the patient receives and DEPENDS ON THE RULE (same as starttime for fifo)
+        self.slotType = slotType        # type of slot (0=none, 1=elective, 2=urgent within normal working hours, 3=urgent in overtime)
+        self.patientType = patientType  # 1 (= elective) or 2 (= urgent) or 0 to represent a break
     # Functions
 
 
@@ -21,24 +22,30 @@ class Patient():
     global nr, patientType, scanType, callWeek, callDay, callTime, tardiness, isNoShow, duration
 
     def __init__(self, nr, patientType, scanType, callWeek, callDay, callTime, tardiness, isNoShow, duration):
-        self.nr = nr
-        self.patientType = patientType
-        self.scanType = scanType
-        self.callWeek = callWeek
-        self.callDay = callDay
-        self.callTime = callTime
-        self.scanWeek = -1
-        self.scanDay = -1
-        self.slotNr = -1
-        self.appTime = -1
+        self.nr = nr                    # individual nr to identify
+        self.patientType = patientType  # same as for patienttype in slot class
+        self.scanType = scanType        # 0 for elective patients, but 5 types for urgent patients
+        
+        # next 3 variables indicate time at which patient requests an appointment
+        self.callWeek = callWeek        # week of arrival (elective: call, urgent: actual arrival)
+        self.callDay = callDay          # day of arrival (elective: call, urgent: actual arrival)
+        self.callTime = callTime        # time of arrival (elective: call, urgent: actual arrival) (in hours)
+        
+        # next 4 variables indicate appointment of the patients
+        # default of -1 means unscheduled
+        self.scanWeek = -1              # week of appointment
+        self.scanDay = -1               # day of appointment
+        self.slotNr = -1                # slot number of appointment
+        self.appTime = -1               # time of appointment (elective: according to RULE, urgent: slot start time) (in hours)
+
         self.tardiness = tardiness
         self.isNoShow = isNoShow
-        self.duration = duration
-        self.scanTime = -1.0
+        self.duration = duration        # actual duration taken from random distr
+        self.scanTime = -1.0            # actual start time of the patients appointment
 
     # Functions
     def getAppWT(self):
-        if self.scanTime != -1:
+        if self.slotNr != -1: # AANPASSEN VOLGERNS MIJ NAAR SELF.SLOTNR (@WOuter of Viktor)
             return (((self.scanWeek - self.callWeek) * 7 + self.scanDay - self.callDay) * 24 + self.appTime - self.callTime)  # in hours
         else:
             print("CAN NOT CALCULATE APPOINTMENT WT OF PATIENT", self.nr)
@@ -47,9 +54,9 @@ class Patient():
     def getScanWT(self):
         if self.scanTime != 0:
             wt = 0
-            if self.patientType == 1:
+            if self.patientType == 1: # elective patients
                 wt = self.scanTime - (self.appTime + self.tardiness)
-            else:
+            else: # urgent patients
                 wt = self.scanTime - self.callTime
             return max(0.0, wt)
         else:
@@ -64,12 +71,12 @@ class simulation():
         d, s, w, r, patients, patient, movingAvgElectiveAppWT, movingAvgElectiveScanWT, movingAvgUrgentScanWT, movingAvgOT, avgElectiveAppWT, avgElectiveScanWT, \
         avgUrgentScanWT, avgOT, numberOfElectivePatientsPlanned, numberOfUrgentPatientsPlanned, W, R, rule
 
-
-    inputFileName = "../GitHub/Simulation/data"
-    D = 6  # number of days per week (NOTE: Sunday not included! so do NOT use to calculate appointment waiting time)
-    amountOTSlotsPerDay = 10  # number of overtime slots per day
-    S = 32 + amountOTSlotsPerDay  # number of slots per day
-    slotLength = 15.0 / 60.0  # duration of a slot (in hours)
+    # parameters given in the assignment
+    inputFileName = "/input-S1-14.txt"
+    D = 6                           # number of days per week (NOTE: Sunday not included! so do NOT use to calculate appointment waiting time)
+    amountOTSlotsPerDay = 10        # number of overtime slots per day
+    S = 32 + amountOTSlotsPerDay    # number of slots per day
+    slotLength = 15.0 / 60.0        # duration of a slot (in hours)
     lambdaElective = 28.345
     meanTardiness = 0
     stdevTardiness = 2.5
@@ -81,14 +88,14 @@ class simulation():
     cumulativeProbUrgentType = [0.7, 0.8, 0.9, 0.95, 1.0]
     meanUrgentDuration = [15, 17.5, 22.5, 30, 30]
     stdevUrgentDuration = [2.5, 1, 2.5, 1, 4.5]
-    weightEl = 1.0 / 168.0  # objective weight elective
-    weightUr = 1.0 / 9.0  # objective weight urgent scan
+    weightEl = 1.0 / 168.0          # objective weight elective
+    weightUr = 1.0 / 9.0            # objective weight urgent scan
 
-    inputFileName = ".../input-S1-14.txt"
-
-    W = 10  # number of weeks to simulate = runlength
-    R = 1  # number of replications
-    rule = 1
+    
+    # variables we have to SET OURSELVES
+    W = 10      # number of weeks to simulate = runlength
+    R = 1       # number of replications
+    rule = 1    # integer indicating which scheduling rule you are testing
 
     avgElectiveAppWT = 0
     avgElectiveScanWT = 0
@@ -97,11 +104,15 @@ class simulation():
     numberOfElectivePatientsPlanned = 0
     numberOfUrgentPatientsPlanned = 0
 
-    weekSchedule = np.zeros((D, S))
+    # a 2D array of slot objects indicating week schedule you want to test,
+    # fill this by input file of 0 and 1 indicating the slots (later in code)
+    weekSchedule = np.zeros((D, S)) 
     for row in weekSchedule:
         for elem in row:
             elem = Slot(0,0,0,0)
-    patients = []
+    
+    # variables specific to one simulation run (patients list and some objectives)
+    patients = [] 
     movingAvgElectiveAppWT = [W]
     movingAvgElectiveScanWT = [W]
     movingAvgUrgentScanWT = [W]
@@ -112,7 +123,17 @@ class simulation():
     # Functions
     def setWeekSchedule(self):
         # Read and set the slot types (0=none, 1=elective, 2=urgent within normal working hours)
-        return 0
+        
+        # 1) read in the input file indicating the week schedule
+        with open(datapath + inputFileName, 'r') as file:
+        schedule = file.read()
+        elementInt = -1
+        for s in range(0,32):
+            for d in range(0,D):
+                weekSchedule[d][s].slotType = elementInt
+                weekSchedule[d][s].patientType = elementInt
+        
+    
 
     def resetSystem(self):
         global avgElectiveAppWT, avgElectiveScanWT, avgUrgentScanWT, avgOT, numberOfElectivePatientsPlanned, numberOfUrgentPatientsPlanned, patients, \
@@ -214,6 +235,7 @@ class simulation():
     def runOneSimulation(self):
         return 0
 
+    # method called by the main (starts the whole simulation process):
     def runSimulations(self):
         global avgOT, avgElectiveAppWT, avgElectiveScanWT, avgUrgentScanWT
         electiveAppWT = 0
@@ -221,15 +243,16 @@ class simulation():
         urgentScanWT = 0
         OT = 0
         OV = 0
+        # first set weekSchedule by filling in 2D slot array
         self.setWeekSchedule()  # set cyclic slot schedule based on given input file
         column_names = ["r", "elAppWT", "elScanWT", "urScanWT", "OT", "OV"]
         output = pd.DataFrame(columns=column_names)
         #print("r \t elAppWT \t elScanWT \t urScanWT \t OT \t OV \n")
         # run R replications 
         for r in range(0, R):
-            self.resetSystem()  # reset all variables related to 1 replication
+            self.resetSystem()  # 2) reset all variables related to 1 replication
             seed  # set seed value for random value generator
-            self.runOneSimulation()  # run 1 simulation / replication
+            self.runOneSimulation()  # 3) run 1 simulation / replication
             electiveAppWT = electiveAppWT + avgElectiveAppWT
             electiveScanWT = electiveScanWT + avgElectiveScanWT
             urgentScanWT = avgUrgentScanWT + urgentScanWT
