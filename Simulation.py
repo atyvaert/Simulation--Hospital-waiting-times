@@ -71,8 +71,16 @@ class simulation():
         d, s, w, r, patients, patient, movingAvgElectiveAppWT, movingAvgElectiveScanWT, movingAvgUrgentScanWT, movingAvgOT, avgElectiveAppWT, avgElectiveScanWT, \
         avgUrgentScanWT, avgOT, numberOfElectivePatientsPlanned, numberOfUrgentPatientsPlanned, W, R, rule, weekSchedule
 
-    # parameters given in the assignment
+    # Method 1
     inputFileName = "./data/input-S1-14.txt"
+
+    # Method 2
+    # inputFileName = inputFileName = "./data/scenario2_10Slots.txt"
+    # inputFileName = inputFileName = "./data/scenario2_12Slots.txt"
+    # inputFileName = inputFileName = "./data/scenario2_16Slots.txt"
+    # inputFileName = inputFileName = "./data/scenario2_18Slots.txt"
+    # inputFileName = inputFileName = "./data/scenario2_20Slots.txt"
+    
     D = 6                           # number of days per week (NOTE: Sunday not included! so do NOT use to calculate appointment waiting time)
     amountOTSlotsPerDay = 10        # number of overtime slots per day
     S = 32 + amountOTSlotsPerDay    # number of slots per day
