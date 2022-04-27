@@ -1,17 +1,9 @@
 import numpy as np
 import math
-from collections import defaultdict
-from scipy.stats import t as T_value
-from scipy.stats import norm
-import matplotlib.pyplot as plt
-import time
-import csv
 
-def Exponential_distribution(lambdaValue, randomState):
-    j1 = randomState.rand()
+def Exponential_distribution(lambdaValue):
+    j1 = np.random.uniform(0,1)
     #Implementing antithetic VR
-    if run % 2 == 1:
-        j1 = 1 - j1  
     if (j1 == 0): j1 += 0.0001
     j2 = -math.log(j1) / lambdaValue
     return j2

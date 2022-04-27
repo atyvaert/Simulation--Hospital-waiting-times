@@ -72,7 +72,7 @@ class simulation():
         avgUrgentScanWT, avgOT, numberOfElectivePatientsPlanned, numberOfUrgentPatientsPlanned, W, R, rule, weekSchedule
 
     # parameters given in the assignment
-    inputFileName = "./input-S1-14.txt"
+    inputFileName = "./data/input-S1-14.txt"
     D = 6                           # number of days per week (NOTE: Sunday not included! so do NOT use to calculate appointment waiting time)
     amountOTSlotsPerDay = 10        # number of overtime slots per day
     S = 32 + amountOTSlotsPerDay    # number of slots per day
@@ -110,10 +110,10 @@ class simulation():
     
     # variables specific to one simulation run (patients list and some objectives)
     patients = [] 
-    movingAvgElectiveAppWT = [W]
-    movingAvgElectiveScanWT = [W]
-    movingAvgUrgentScanWT = [W]
-    movingAvgOT = [W]
+    movingAvgElectiveAppWT = []
+    movingAvgElectiveScanWT = []
+    movingAvgUrgentScanWT = []
+    movingAvgOT = []
 
 
 
@@ -123,7 +123,6 @@ class simulation():
         
         # 1) read in the input file indicating the week schedule
         schedule = pd.read_csv(inputFileName, sep = '\t', header = None)
-
         # 2) loop over the different time slot each day and assign the slot type defined in the schedule
         for s in range(0,32):
             for d in range(0,D):
@@ -207,13 +206,12 @@ class simulation():
 
     # the next function generates a patient list
     def generatePatients(self):
-        global arrivalTimeNext, counter, patientType, scanType, endTime, callTime, tardiness, duration, lambdaa, noShow, lambdaElective, lambdaUrgent
+        global arrivalTimeNext, counter, patientType, scanType, endTime, callTime, tardiness, duration, lambdaa, noShow, lambdaElective, lambdaUrgent, W, D
         counter = 0  # total number of patients so far
         
         # go over each week and each day and generate a patient list depending on the day
-        for w in W:
-            for d in D:  # not on Sunday
-
+        for w in range(0,W):
+            for d in range(0,D):  # not on Sunday
                 # generate ELECTIVE patients for this day
                 if d < D - 1:  # not on Saturday either
                     arrivalTimeNext = 8 + Exponential_distribution(lambdaElective) * (17 - 8)
@@ -254,8 +252,7 @@ class simulation():
                     patient = Patient(counter, patientType, scanType, w, d, callTime, tardiness, noShow, duration)
                     patients.append(patient)
                     counter = counter + 1
-                    arrivalTimeNext = arrivalTimeNext + Exponential_distribution(lambda_local) * (
-                                endTime - 8)  # arrival time of next patient (if < 17h)
+                    arrivalTimeNext = arrivalTimeNext + Exponential_distribution(lambda_local) * (endTime - 8)  # arrival time of next patient (if < 17h)
 
     def getNextSlotNrFromTime(self, day, patientType, time):
         found = False
@@ -263,7 +260,7 @@ class simulation():
         for s in range(0, S):
             if found:
                 break
-            if self.weekSchedule[day][s].appTime > time and patientType == self.weekSchedule[day][s].patientType:
+            if weekSchedule[day][s].appTime > time and patientType == weekSchedule[day][s].patientType:
                 found = True
                 slotNr = s
         if (found == False):
@@ -296,19 +293,22 @@ class simulation():
         # (note, we assume each day (i.e. also day 0) has at least one slot of each patient type!)
         # A) elective
         found = False
-        for s in range(0,S) and found != True:
-            if(weekSchedule[d][s].patientType == 1):
-                day[0] = d
-                slot[0] = s
-                found = True
+        d=0
+        for s in range(0,S):
+            if(found != True):
+                if(weekSchedule[d][s].patientType == 1):
+                    day[0] = d
+                    slot[0] = s
+                    found = True
         
         # B) Urgent
         found = False
-        for s in range(0,S) and found != True:
-            if(weekSchedule[d][s].patientType == 2):
-                day[1] = d
-                slot[1] = s
-                found = True
+        for s in range(0,S):
+            if(found != True):
+                if(weekSchedule[d][s].patientType == 2):
+                    day[1] = d
+                    slot[1] = s
+                    found = True
         
         # go over SORTED patient list and assign slots
         
@@ -370,8 +370,8 @@ class simulation():
                     if(patient.patientType == 2 or patient.callTime < weekSchedule[day[i]][slotNr].appTime):
                         slot[i] = self.getNextSlotNrFromTime(day[i], patient.patientType, patient.callTime)
                     
-                    # for elective patietns with no free slot available
-                    else: 
+                    # for elective patients with no free slot available
+                    else:
                         # determine the next day
                         if(day[i] < D - 1):
                             day[i] = day[i] + 1
@@ -395,16 +395,17 @@ class simulation():
                 # update moving average elective appointment waiting time
                 if(patient.patientType == 1):
                     if(previousWeek < week[i]):
-                        movingAvgElectiveAppWT[previousWeek] = movingAvgElectiveAppWT[previousWeek]/numberOfElectivePerWeek
+                        movingAvgElectiveAppWT.append(movingAvgElectiveAppWT[previousWeek]/numberOfElectivePerWeek)
                         numberOfElectivePerWeek = 0
                         previousWeek = week[i]
-                    
                     wt = patient.getAppWT()
-                    movingAvgElectiveAppWT[week[i]] += wt
+                    if(week[i] == 0):
+                        movingAvgElectiveAppWT.append(wt)
+                    else:
+                        movingAvgElectiveAppWT[week[i]] += wt
                     numberOfElectivePerWeek += 1
                     avgElectiveAppWT += wt
                     numberOfElective += 1
-                
                 # set next slot of the current patient type
                 found = False
                 startD = day[i]
@@ -412,14 +413,16 @@ class simulation():
                 
                 # update the week, day and slot we are currently looking at
                 # this is the next available slot for this patientType
-                for w in range(week[i], W) and found != True:
-                    for d in range(startD, D) and found != True:
-                        for s in range(startS, S):
-                            if(weekSchedule[d][s].patientType == patient.patientType):
-                                week[i] = w
-                                day[i] = d
-                                slot[i] = s
-                                found = True
+                for w in range(week[i], W):
+                    if(found != True):
+                        for d in range(startD, D):
+                            if(found != True):
+                                for s in range(startS, S):
+                                    if(weekSchedule[d][s].patientType == patient.patientType):
+                                        week[i] = w
+                                        day[i] = d
+                                        slot[i] = s
+                                        found = True
                         
                         startS = 0
                     
@@ -432,7 +435,7 @@ class simulation():
         
         # update moving average elective appointment waiting time in last week
         movingAvgElectiveAppWT[W-1] = movingAvgElectiveAppWT[W-1] / numberOfElectivePerWeek
-        
+
         # calculate objective value
         avgElectiveAppWT = avgElectiveAppWT / numberOfElective
 
@@ -465,7 +468,7 @@ class simulation():
             #Scan WT (only done for patients who actually show up)
             if patient.isNoShow == False:
                 if (patient.scanWeek != prevWeek or patient.scanDay != prevDay):
-                    patient.scanTime = patient.arrivalTime
+                    prevScanEndTime = weekSchedule[patient.scanDay][patient.slotNr].startTime;
                 elif(prevIsNoShow == True):
                     ## zal wel nog niet kloppen --> hangt af van Artur zijn invulling van zijn weekschedule
                     patient.scanTime = max(weekSchedule[patient.scanDay][patient.slotNr].startTime, max(prevScanEndTime, patient.arrivalTime))
