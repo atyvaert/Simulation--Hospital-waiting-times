@@ -45,7 +45,7 @@ class Patient():
 
     # Functions
     def getAppWT(self):
-        if self.slotNr != -1:
+        if self.slotNr != -1: # AANPASSEN VOLGERNS MIJ NAAR SELF.SLOTNR (@WOuter of Viktor)
             return (((self.scanWeek - self.callWeek) * 7 + self.scanDay - self.callDay) * 24 + self.appTime - self.callTime)  # in hours
         else:
             print("CAN NOT CALCULATE APPOINTMENT WT OF PATIENT", self.nr)
@@ -170,7 +170,8 @@ class simulation():
                 if(time == 12):
                     time = 13
                 
-                
+               
+
 
     def resetSystem(self):
         global avgElectiveAppWT, avgElectiveScanWT, avgUrgentScanWT, avgOT, numberOfElectivePatientsPlanned, numberOfUrgentPatientsPlanned, patients, \
