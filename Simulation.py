@@ -118,7 +118,7 @@ class simulation():
     
     # variables specific to one simulation run (patients list and some objectives)
     patients = [] 
-    movingAvgElectiveAppWT = []
+    movingAvgElectiveAppWT = [0]
     movingAvgElectiveScanWT = []
     movingAvgUrgentScanWT = []
     movingAvgOT = []
@@ -401,19 +401,17 @@ class simulation():
                 
                 
                 # update moving average elective appointment waiting time
-                if(patient.patientType == 1):
-                    if(previousWeek < week[i]):
-                        movingAvgElectiveAppWT.append(movingAvgElectiveAppWT[previousWeek]/numberOfElectivePerWeek)
+                if (patient.patientType == 1):
+                    if (previousWeek < week[i]):
+                        A = movingAvgElectiveAppWT[previousWeek] / numberOfElectivePerWeek
+                        movingAvgElectiveAppWT.append(A)
                         numberOfElectivePerWeek = 0
                         previousWeek = week[i]
-                    wt = patient.getAppWT()
-                    if(week[i] == 0):
-                        movingAvgElectiveAppWT.append(wt)
-                    else:
-                        movingAvgElectiveAppWT[week[i]] += wt
-                    numberOfElectivePerWeek += 1
-                    avgElectiveAppWT += wt
-                    numberOfElective += 1
+                wt = patient.getAppWT()
+                movingAvgElectiveAppWT[week[i]] += wt
+                numberOfElectivePerWeek += 1
+                avgElectiveAppWT += wt
+                numberOfElective += 1
                 # set next slot of the current patient type
                 found = False
                 startD = day[i]
