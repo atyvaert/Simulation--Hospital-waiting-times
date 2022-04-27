@@ -69,7 +69,7 @@ class simulation():
     global inputFileName, D, amountOTSlotsPerDay, S, slotLength, lambdaElective, meanTardiness, stdevTardiness, probNoShow, meanElectiveDuration, \
         stdevElectiveDuration, lambdaUrgent, probUrgentType, cumulativeProbUrgentType, meanUrgentDuration, stdevUrgentDuration, weightEl, weightUr, \
         d, s, w, r, patients, patient, movingAvgElectiveAppWT, movingAvgElectiveScanWT, movingAvgUrgentScanWT, movingAvgOT, avgElectiveAppWT, avgElectiveScanWT, \
-        avgUrgentScanWT, avgOT, numberOfElectivePatientsPlanned, numberOfUrgentPatientsPlanned, W, R, rule, setWeekSchedule
+        avgUrgentScanWT, avgOT, numberOfElectivePatientsPlanned, numberOfUrgentPatientsPlanned, W, R, rule, weekSchedule
 
     # parameters given in the assignment
     inputFileName = "./input-S1-14.txt"
@@ -118,7 +118,7 @@ class simulation():
 
 
     # Functions
-     def setWeekSchedule(self):
+    def setWeekSchedule(self):
         # Read and set the slot types (0=none, 1=elective, 2=urgent within normal working hours)
         
         # 1) read in the input file indicating the week schedule
@@ -279,6 +279,10 @@ class simulation():
     # Hier niet 100% zeker of het begin aangezien geen return statements
     # tov de originele code die dit wel heeft, maar toch denk ik dat het juist is
     def schedulePatients(self):
+        global inputFileName, D, amountOTSlotsPerDay, S, slotLength, lambdaElective, meanTardiness, stdevTardiness, probNoShow, meanElectiveDuration, \
+            stdevElectiveDuration, lambdaUrgent, probUrgentType, cumulativeProbUrgentType, meanUrgentDuration, stdevUrgentDuration, weightEl, weightUr, \
+            d, s, w, r, patients, patient, movingAvgElectiveAppWT, movingAvgElectiveScanWT, movingAvgUrgentScanWT, movingAvgOT, avgElectiveAppWT, avgElectiveScanWT, \
+            avgUrgentScanWT, avgOT, numberOfElectivePatientsPlanned, numberOfUrgentPatientsPlanned, W, R, rule, weekSchedule
         # dit rangschikt alle patients obv eerst de callWeek, dan callDay...
         # voor patientType is 2 belangrijker dan 1 en anders is het kleinste eerst
         patients.sort(key=lambda x: (x.callWeek, x.callDay, x.callTime, -x.patientType))
@@ -330,14 +334,14 @@ class simulation():
                 if(patient.callWeek > week[i]):
                     week[i] = patient.callWeek
                     day[i] = 0
-                    slot[i] = getNextSlotNrFromTime(day[i], patient.patientType, 0)
+                    slot[i] = self.getNextSlotNrFromTime(day[i], patient.patientType, 0)
                     # note we assume there is at least one slot of each patient type per day 
                     # => this line will find first slot of this type
                 
                 # determine day where we start searching for a slot
                 if(patient.callWeek == week[i] and patient.callDay > day[i]):
                     day[i] = patient.callDay
-                    slot[i] = getNextSlotNrFromTime(day[i], patient.patientType, 0)
+                    slot[i] = self.getNextSlotNrFromTime(day[i], patient.patientType, 0)
                     # note we assume there is at least one slot of each patient type per day 
                     # => this line will find first slot of this type
                 
@@ -364,7 +368,7 @@ class simulation():
                     
                     # for urgent patients or elective with a free slot that day
                     if(patient.patientType == 2 or patient.callTime < weekSchedule[day[i]][slotNr].appTime):
-                        slot[i] = getNextSlotNrFromTime(day[i], patient.patientType, patient.callTime)
+                        slot[i] = self.getNextSlotNrFromTime(day[i], patient.patientType, patient.callTime)
                     
                     # for elective patietns with no free slot available
                     else: 
@@ -378,7 +382,7 @@ class simulation():
                         
                         # find the first slot on the next day (if within the planning horizon)
                         if(week[i] < W):
-                            slot[i] = getNextSlotNrFromTime(day[i], patient.patientType, 0)
+                            slot[i] = self.getNextSlotNrFromTime(day[i], patient.patientType, 0)
                     
                 
                 # schedule the patient to selected slot
