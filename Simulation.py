@@ -118,8 +118,8 @@ class simulation():
     
     # variables specific to one simulation run (patients list and some objectives)
     patients = [] 
-    movingAvgElectiveAppWT = [0]
-    movingAvgElectiveScanWT = []
+    movingAvgElectiveAppWT = [0] * W
+    movingAvgElectiveScanWT = [0] * W
     movingAvgUrgentScanWT = []
     movingAvgOT = []
 
@@ -288,6 +288,7 @@ class simulation():
             stdevElectiveDuration, lambdaUrgent, probUrgentType, cumulativeProbUrgentType, meanUrgentDuration, stdevUrgentDuration, weightEl, weightUr, \
             d, s, w, r, patients, patient, movingAvgElectiveAppWT, movingAvgElectiveScanWT, movingAvgUrgentScanWT, movingAvgOT, avgElectiveAppWT, avgElectiveScanWT, \
             avgUrgentScanWT, avgOT, numberOfElectivePatientsPlanned, numberOfUrgentPatientsPlanned, W, R, rule, weekSchedule
+
         # dit rangschikt alle patients obv eerst de callWeek, dan callDay...
         # voor patientType is 2 belangrijker dan 1 en anders is het kleinste eerst
         patients.sort(key=lambda x: (x.callWeek, x.callDay, x.callTime, -x.patientType))
@@ -325,17 +326,19 @@ class simulation():
         numberOfElective = 0
         numberOfElectivePerWeek = 0
         
-        # loop through all the patients, this is possible cause it is an
+        # loop through all the patients, this is possible because it is an
         # ordered list
         for patient in patients:
-            
+
+
             # set index i dependent on the patient type
             # to know which type of slot we have to look at
             i = patient.patientType - 1
-            
+
             # if still within the planning horizon, start looking for a slot:
             if(week[i] < W):
-                
+
+                print(week[i])
                 # determine week where we start searching for a slot
                 # if the patient called after the current week, start looking
                 # in the patients callWeek (same principle for day and time)
@@ -402,16 +405,21 @@ class simulation():
                 
                 # update moving average elective appointment waiting time
                 if (patient.patientType == 1):
+                    print(movingAvgElectiveAppWT)
+                    print(week[i])
+                    print(previousWeek)
                     if (previousWeek < week[i]):
-                        A = movingAvgElectiveAppWT[previousWeek] / numberOfElectivePerWeek
-                        movingAvgElectiveAppWT.append(A)
+                        movingAvgElectiveAppWT[previousWeek] = movingAvgElectiveAppWT[previousWeek] / numberOfElectivePerWeek
                         numberOfElectivePerWeek = 0
                         previousWeek = week[i]
-                wt = patient.getAppWT()
-                movingAvgElectiveAppWT[week[i]] += wt
-                numberOfElectivePerWeek += 1
-                avgElectiveAppWT += wt
-                numberOfElective += 1
+
+
+                    wt = patient.getAppWT()
+                    movingAvgElectiveAppWT[week[i]] = movingAvgElectiveAppWT[week[i]] + wt
+                    numberOfElectivePerWeek += 1
+                    avgElectiveAppWT += wt
+                    numberOfElective += 1
+
                 # set next slot of the current patient type
                 found = False
                 startD = day[i]
@@ -440,7 +448,7 @@ class simulation():
         
         
         # update moving average elective appointment waiting time in last week
-        movingAvgElectiveAppWT[W-1] = movingAvgElectiveAppWT[W-1] / numberOfElectivePerWeek
+        movingAvgElectiveAppWT.append(movingAvgElectiveAppWT[W-1] / numberOfElectivePerWeek)
 
         # calculate objective value
         avgElectiveAppWT = avgElectiveAppWT / numberOfElective
@@ -474,7 +482,10 @@ class simulation():
             #Scan WT (only done for patients who actually show up)
             if patient.isNoShow == False:
                 if (patient.scanWeek != prevWeek or patient.scanDay != prevDay):
-                    prevScanEndTime = weekSchedule[patient.scanDay][patient.slotNr].startTime;
+                    # VRAAG AN HIER WRM ANDERS DAN ORIGINELE CODE
+                    prevScanEndTime = weekSchedule[patient.scanDay][patient.slotNr].startTime
+
+                # VRAAG AN WAAROM INSPRINGING HIER ANDERS DAN ORIGINELE CODE
                 elif(prevIsNoShow == True):
                     ## zal wel nog niet kloppen --> hangt af van Artur zijn invulling van zijn weekschedule
                     patient.scanTime = max(weekSchedule[patient.scanDay][patient.slotNr].startTime, max(prevScanEndTime, patient.arrivalTime))
@@ -482,7 +493,7 @@ class simulation():
                     patient.scanTime = max(prevScanEndTime, patient.arrivalTime)
                 
                 wt = patient.getScanWT()
-                if(patient.pantientType == 1):
+                if(patient.patientType == 1):
                     movingAvgElectiveScanWT[patient.scanWeek] += wt
                 else:
                     movingAvgUrgentScanWT[patient.scanWeek] += wt
@@ -502,6 +513,7 @@ class simulation():
                     movingAvgOT[prevWeek] += max(0.0, prevScanEndTime - 13)
                 else:
                     movingAvgOT[prevWeek] += max(0.0, prevScanEndTime - 17)
+
                 if(prevDay == 3 or prevDay == 5):
                     avgOT += max(0.0, prevScanEndTime - 13)
                 else:
