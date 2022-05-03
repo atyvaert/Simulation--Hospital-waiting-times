@@ -43,9 +43,12 @@ class Patient():
         self.duration = duration        # actual duration taken from random distr
         self.scanTime = -1.0            # actual start time of the patients appointment
 
+    def __repr__(self):
+        return f' {self.callWeek}, {self.callDay}, {self.scanWeek}, {self.scanDay}, {self.scanTime}, {self.patientType}'
+
     # Functions
     def getAppWT(self):
-        if self.slotNr != -1: # AANPASSEN VOLGERNS MIJ NAAR SELF.SLOTNR (@WOuter of Viktor)
+        if self.slotNr != -1:
             return (((self.scanWeek - self.callWeek) * 7 + self.scanDay - self.callDay) * 24 + self.appTime - self.callTime)  # in hours
         else:
             print("CAN NOT CALCULATE APPOINTMENT WT OF PATIENT", self.nr)
@@ -117,18 +120,22 @@ class simulation():
     #weekSchedule = np.full((D,S), Slot(0,0,0,0))
     #print(weekSchedule)
 
-    weekSchedule = [Slot(0,0,0,0)] * D
-    for d in range(0, D):
-        weekSchedule[d] = [Slot(0,0,0,0)] * S
+    #weekSchedule = [Slot(0,0,0,0)] * D
+    #for d in range(0, D):
+    #    weekSchedule[d] = [Slot(0,0,0,0)] * S
 
-    print(weekSchedule)
+    weekSchedule = dict()
+    for d in range(0, D):
+        weekSchedule[d] = dict()
+        for s in range(0, S):
+            weekSchedule[d][s] = 0
     
     # variables specific to one simulation run (patients list and some objectives)
     patients = [] 
     movingAvgElectiveAppWT = [0] * W
     movingAvgElectiveScanWT = [0] * W
-    movingAvgUrgentScanWT = []
-    movingAvgOT = []
+    movingAvgUrgentScanWT = [0] * W
+    movingAvgOT = [0] * W
 
 
 
@@ -141,15 +148,13 @@ class simulation():
         # 2) loop over the different time slot each day and assign the slot type defined in the schedule
         for s in range(0, 32):
             for d in range(0, D):
-                weekSchedule[d][s].slotType = schedule[d][s]
-                weekSchedule[d][s].patientType = schedule[d][s]
-                print(weekSchedule[1][2].slotType)
+                weekSchedule[d][s] = Slot(0, 0, schedule[d][s], schedule[d][s])
+
 
         # 3) Set the type of the overtime slots (3=urgent in overtime)
         for d in range(0, D):
             for s in range(32, S):
-                weekSchedule[d][s].slotType = 3
-                weekSchedule[d][s].patientType = 2
+                weekSchedule[d][s] = Slot(0, 0, 3, 2)
                 #print(weekSchedule[1][2].slotType)
                 
         # 4) set the start and the appointment time of the slot
@@ -162,6 +167,7 @@ class simulation():
                 
                 # define the appointment time of the slot
                 # A) for non-elective slot types: appointment time = slot start time
+                #print(weekSchedule[d][s].slotType)
                 if(weekSchedule[d][s].slotType != 1):
                     weekSchedule[d][s].appTime = time
                 
@@ -180,13 +186,18 @@ class simulation():
                         return 0
                 
                 # update the time variable
+                #print(weekSchedule[d][s].appTime)
                 time += slotLength
                 
                 # skip to the end of the lunch break if it is lunch
                 if(time == 12):
                     time = 13
-                
-               
+
+        #for d in range(0, D):
+            #for s in range(0, S):
+                #print(weekSchedule[d][s].patientType)
+                #print(weekSchedule[d][s].appTime)
+
 
 
     def resetSystem(self):
@@ -280,6 +291,7 @@ class simulation():
             if weekSchedule[day][s].appTime > time and patientType == weekSchedule[day][s].patientType:
                 found = True
                 slotNr = s
+
         if (found == False):
             print("NO SLOT EXISTS DURING TIME %.2f \n", time)
             exit(0)
@@ -339,13 +351,13 @@ class simulation():
         # ordered list
         for patient in patients:
 
-
             # set index i dependent on the patient type
             # to know which type of slot we have to look at
             i = patient.patientType - 1
 
             # if still within the planning horizon, start looking for a slot:
             if(week[i] < W):
+
 
                 # determine week where we start searching for a slot
                 # if the patient called after the current week, start looking
@@ -356,28 +368,35 @@ class simulation():
                     slot[i] = self.getNextSlotNrFromTime(day[i], patient.patientType, 0)
                     # note we assume there is at least one slot of each patient type per day 
                     # => this line will find first slot of this type
-                
+
+
                 # determine day where we start searching for a slot
                 if(patient.callWeek == week[i] and patient.callDay > day[i]):
                     day[i] = patient.callDay
                     slot[i] = self.getNextSlotNrFromTime(day[i], patient.patientType, 0)
                     # note we assume there is at least one slot of each patient type per day 
                     # => this line will find first slot of this type
-                
+
+                print(f'{patient.callWeek}, {patient.callDay}')
+                print(f'{patient.callTime}, {weekSchedule[day[i]][slot[i]].appTime}')
+                print(weekSchedule[0][1].appTime)
+                print(f'{week}, {day}, {slot}')
                 # determine slot
-                if(patient.callWeek == week[i] and patient.callDay == day[i] 
-                   and patient.callTime >= weekSchedule[day[i]][slot[i]].appTime):
-                    
+                if((patient.callWeek == week[i]) and (patient.callDay == day[i])
+                   and (patient.callTime >= weekSchedule[day[i]][slot[i]].appTime)):
+
+
                     # 1) find last slot on day "day[i]"
                     found = False
                     slotNr = -1
                     s = S - 1
-                    while((found != True) and (s >= 0)):
-                        if(weekSchedule[day[i]][s].patientType == patient.patientType):
-                            found = True
-                            slotNr = s
-                        s -= 1
-                    
+                    for s in range(S-1, -1, -1):
+                        if((found != True)):
+                            if(weekSchedule[day[i]][s].patientType == patient.patientType):
+                                found = True
+                                slotNr = s
+
+
                     # 2) urgent patients have to be treated on the same day 
                     # either in normal hours or in overtime
                     # !! make sure there are enough overtime slots
@@ -468,9 +487,14 @@ class simulation():
         i += 1
 
     def runOneSimulation(self):
-        global prevWeek, prevDay, numberOfPatientsWeek, numberOfPatients, arrivalTime, wt, prevScanEndTime, prevIsNoShow
+        global prevWeek, prevDay, numberOfPatientsWeek, numberOfPatients, arrivalTime, wt, prevScanEndTime, prevIsNoShow, \
+        avgUrgentScanWT, avgUrgentScanWT
         self.generatePatients() # create patient arrival events (elective patients call, urgent patients arrive at the hospital)
         self.schedulePatients() # schedule urgent and elective patients in slots based on their arrival events => determine the appointment wait time
+
+        #for patient in patients:
+            #print(patient)
+
         self.sortPatientsOnAppTime() # sort patients on their appointment time (unscheduled patients are grouped at the end of the list)
         prevWeek = 0
         prevDay = -1
