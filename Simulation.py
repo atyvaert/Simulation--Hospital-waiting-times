@@ -114,7 +114,14 @@ class simulation():
 
     # a 2D array of slot objects indicating week schedule you want to test,
     # fill this by input file of 0 and 1 indicating the slots (later in code)
-    weekSchedule = np.full((D,S), Slot(0,0,0,0))
+    #weekSchedule = np.full((D,S), Slot(0,0,0,0))
+    #print(weekSchedule)
+
+    weekSchedule = [Slot(0,0,0,0)] * D
+    for d in range(0, D):
+        weekSchedule[d] = [Slot(0,0,0,0)] * S
+
+    print(weekSchedule)
     
     # variables specific to one simulation run (patients list and some objectives)
     patients = [] 
@@ -132,16 +139,18 @@ class simulation():
         # 1) read in the input file indicating the week schedule
         schedule = pd.read_csv(inputFileName, sep = '\t', header = None)
         # 2) loop over the different time slot each day and assign the slot type defined in the schedule
-        for s in range(0,32):
-            for d in range(0,D):
+        for s in range(0, 32):
+            for d in range(0, D):
                 weekSchedule[d][s].slotType = schedule[d][s]
                 weekSchedule[d][s].patientType = schedule[d][s]
-                
+                print(weekSchedule[1][2].slotType)
+
         # 3) Set the type of the overtime slots (3=urgent in overtime)
-        for d in range(0,D):
-            for s in range(32,S):
+        for d in range(0, D):
+            for s in range(32, S):
                 weekSchedule[d][s].slotType = 3
                 weekSchedule[d][s].patientType = 2
+                #print(weekSchedule[1][2].slotType)
                 
         # 4) set the start and the appointment time of the slot
         for d in range(0,D):
@@ -338,7 +347,6 @@ class simulation():
             # if still within the planning horizon, start looking for a slot:
             if(week[i] < W):
 
-                print(week[i])
                 # determine week where we start searching for a slot
                 # if the patient called after the current week, start looking
                 # in the patients callWeek (same principle for day and time)
@@ -405,9 +413,6 @@ class simulation():
                 
                 # update moving average elective appointment waiting time
                 if (patient.patientType == 1):
-                    print(movingAvgElectiveAppWT)
-                    print(week[i])
-                    print(previousWeek)
                     if (previousWeek < week[i]):
                         movingAvgElectiveAppWT[previousWeek] = movingAvgElectiveAppWT[previousWeek] / numberOfElectivePerWeek
                         numberOfElectivePerWeek = 0
