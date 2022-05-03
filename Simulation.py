@@ -404,10 +404,10 @@ class simulation():
                     # i.e. if the patient can be planned on day "day[i]"
                     
                     # for urgent patients or elective with a free slot that day
-                    print(slot)
+                    #print(slot)
                     if((patient.patientType == 2) or (patient.callTime < weekSchedule[day[i]][slotNr].appTime)):
                         slot[i] = self.getNextSlotNrFromTime(day[i], patient.patientType, patient.callTime)
-                        print(f'{week}, {day}, {slot}')
+                        #print(f'{week}, {day}, {slot}')
                     
                     # for elective patients with no free slot available
                     else:
@@ -504,14 +504,19 @@ class simulation():
         numberOfPatients = [0,0]
         prevScanEndTime = float(0)
         prevIsNoShow = bool(False)
-
+        counter = 0
         for patient in patients:
+            print(counter)
+            counter = counter + 1
             if patient.scanWeek == -1:
                 break # stop at the first unplanned patient because we then have visited all scheduled patients
             arrivalTime = float(patient.appTime + patient.tardiness)
 
             #Scan WT (only done for patients who actually show up)
             if patient.isNoShow == False:
+                if ((patient.scanWeek != prevWeek) or (patient.scanDay != prevDay)):
+                    # VRAAG AN HIER WRM ANDERS DAN ORIGINELE CODE
+                    prevScanEndTime = weekSchedule[patient.scanDay][patient.slotNr].startTime
                 # VRAAG AN WAAROM INSPRINGING HIER ANDERS DAN ORIGINELE CODE
                 if(prevIsNoShow == True):
                     ## zal wel nog niet kloppen --> hangt af van Artur zijn invulling van zijn weekschedule
@@ -533,10 +538,7 @@ class simulation():
                     avgUrgentScanWT += wt
                 
                 numberOfPatients[patient.patientType - 1] +=1
-            else:
-                if (patient.scanWeek != prevWeek or patient.scanDay != prevDay):
-                    # VRAAG AN HIER WRM ANDERS DAN ORIGINELE CODE
-                    prevScanEndTime = weekSchedule[patient.scanDay][patient.slotNr].startTime
+
             #Overtime
             if(prevDay > -1 and prevDay != patient.scanDay):
                 if(prevDay == 3 or prevDay == 5):
