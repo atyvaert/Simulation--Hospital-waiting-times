@@ -363,6 +363,7 @@ class simulation():
                 # if the patient called after the current week, start looking
                 # in the patients callWeek (same principle for day and time)
                 if(patient.callWeek > week[i]):
+                    print("Hallo week")
                     week[i] = patient.callWeek
                     day[i] = 0
                     slot[i] = self.getNextSlotNrFromTime(day[i], patient.patientType, 0)
@@ -372,20 +373,21 @@ class simulation():
 
                 # determine day where we start searching for a slot
                 if(patient.callWeek == week[i] and patient.callDay > day[i]):
+                    print("Hallo dag")
                     day[i] = patient.callDay
                     slot[i] = self.getNextSlotNrFromTime(day[i], patient.patientType, 0)
                     # note we assume there is at least one slot of each patient type per day 
                     # => this line will find first slot of this type
 
-                print(f'{patient.callWeek}, {patient.callDay}')
-                print(f'{patient.callTime}, {weekSchedule[day[i]][slot[i]].appTime}')
-                print(weekSchedule[0][1].appTime)
-                print(f'{week}, {day}, {slot}')
+                #print(f'{patient.callWeek}, {patient.callDay}')
+                #print(f'{patient.callTime}, {weekSchedule[day[i]][slot[i]].appTime}')
+                #print(weekSchedule[0][1].appTime)
+                #print(f'{week}, {day}, {slot}')
                 # determine slot
                 if((patient.callWeek == week[i]) and (patient.callDay == day[i])
                    and (patient.callTime >= weekSchedule[day[i]][slot[i]].appTime)):
 
-
+                    print("Hallo slot")
                     # 1) find last slot on day "day[i]"
                     found = False
                     slotNr = -1
@@ -405,8 +407,10 @@ class simulation():
                     # i.e. if the patient can be planned on day "day[i]"
                     
                     # for urgent patients or elective with a free slot that day
+                    print(slot)
                     if(patient.patientType == 2 or patient.callTime < weekSchedule[day[i]][slotNr].appTime):
                         slot[i] = self.getNextSlotNrFromTime(day[i], patient.patientType, patient.callTime)
+                        print(f'{week}, {day}, {slot}')
                     
                     # for elective patients with no free slot available
                     else:
@@ -456,15 +460,16 @@ class simulation():
                         for d in range(startD, D):
                             if(found != True):
                                 for s in range(startS, S):
-                                    if(weekSchedule[d][s].patientType == patient.patientType):
-                                        week[i] = w
-                                        day[i] = d
-                                        slot[i] = s
-                                        found = True
+                                    if (found != True):
+                                        if(weekSchedule[d][s].patientType == patient.patientType):
+                                            week[i] = w
+                                            day[i] = d
+                                            slot[i] = s
+                                            found = True
                         
-                        startS = 0
+                                startS = 0
                     
-                    startD = 0
+                        startD = 0
                 
                 # if no slot is found, we are at the end of the scheduling horizon
                 if(found != True):
