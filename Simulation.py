@@ -363,7 +363,6 @@ class simulation():
                 # if the patient called after the current week, start looking
                 # in the patients callWeek (same principle for day and time)
                 if(patient.callWeek > week[i]):
-                    print("Hallo week")
                     week[i] = patient.callWeek
                     day[i] = 0
                     slot[i] = self.getNextSlotNrFromTime(day[i], patient.patientType, 0)
@@ -372,8 +371,7 @@ class simulation():
 
 
                 # determine day where we start searching for a slot
-                if(patient.callWeek == week[i] and patient.callDay > day[i]):
-                    print("Hallo dag")
+                if((patient.callWeek == week[i]) and (patient.callDay > day[i])):
                     day[i] = patient.callDay
                     slot[i] = self.getNextSlotNrFromTime(day[i], patient.patientType, 0)
                     # note we assume there is at least one slot of each patient type per day 
@@ -387,7 +385,6 @@ class simulation():
                 if((patient.callWeek == week[i]) and (patient.callDay == day[i])
                    and (patient.callTime >= weekSchedule[day[i]][slot[i]].appTime)):
 
-                    print("Hallo slot")
                     # 1) find last slot on day "day[i]"
                     found = False
                     slotNr = -1
@@ -408,7 +405,7 @@ class simulation():
                     
                     # for urgent patients or elective with a free slot that day
                     print(slot)
-                    if(patient.patientType == 2 or patient.callTime < weekSchedule[day[i]][slotNr].appTime):
+                    if((patient.patientType == 2) or (patient.callTime < weekSchedule[day[i]][slotNr].appTime)):
                         slot[i] = self.getNextSlotNrFromTime(day[i], patient.patientType, patient.callTime)
                         print(f'{week}, {day}, {slot}')
                     
@@ -515,12 +512,8 @@ class simulation():
 
             #Scan WT (only done for patients who actually show up)
             if patient.isNoShow == False:
-                if (patient.scanWeek != prevWeek or patient.scanDay != prevDay):
-                    # VRAAG AN HIER WRM ANDERS DAN ORIGINELE CODE
-                    prevScanEndTime = weekSchedule[patient.scanDay][patient.slotNr].startTime
-
                 # VRAAG AN WAAROM INSPRINGING HIER ANDERS DAN ORIGINELE CODE
-                elif(prevIsNoShow == True):
+                if(prevIsNoShow == True):
                     ## zal wel nog niet kloppen --> hangt af van Artur zijn invulling van zijn weekschedule
                     patient.scanTime = max(weekSchedule[patient.scanDay][patient.slotNr].startTime, max(prevScanEndTime, patient.arrivalTime))
                 else:
@@ -540,7 +533,10 @@ class simulation():
                     avgUrgentScanWT += wt
                 
                 numberOfPatients[patient.patientType - 1] +=1
-
+            else:
+                if (patient.scanWeek != prevWeek or patient.scanDay != prevDay):
+                    # VRAAG AN HIER WRM ANDERS DAN ORIGINELE CODE
+                    prevScanEndTime = weekSchedule[patient.scanDay][patient.slotNr].startTime
             #Overtime
             if(prevDay > -1 and prevDay != patient.scanDay):
                 if(prevDay == 3 or prevDay == 5):
