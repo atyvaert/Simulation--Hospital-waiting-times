@@ -506,8 +506,8 @@ class simulation():
         self.generatePatients() # create patient arrival events (elective patients call, urgent patients arrive at the hospital)
         self.schedulePatients() # schedule urgent and elective patients in slots based on their arrival events => determine the appointment wait time
 
-        #for patient in patients:
-         #   print(patient)
+        for patient in patients:
+            print(patient)
 
         self.sortPatientsOnAppTime() # sort patients on their appointment time (unscheduled patients are grouped at the end of the list)
         prevWeek = 0
@@ -578,7 +578,6 @@ class simulation():
                 prevIsNoShow = False
             prevWeek = patient.scanWeek
             prevDay = patient.scanDay
-
         #update moving averages of the last week
         movingAvgElectiveScanWT[W-1] = movingAvgElectiveScanWT[W-1] / numberOfPatientsWeek[0]
         movingAvgUrgentScanWT[W-1] = movingAvgUrgentScanWT[W-1] / numberOfPatientsWeek[1]
