@@ -105,7 +105,7 @@ class simulation():
     
     # variables we have to SET OURSELVES
     W = 10      # number of weeks to simulate = runlength
-    R = 1       # number of replications
+    R = 100       # number of replications
     rule = 1    # integer indicating which scheduling rule you are testing
 
     avgElectiveAppWT = 0
@@ -514,7 +514,7 @@ class simulation():
             if patient.isNoShow == False:
                 if ((patient.scanWeek != prevWeek) or (patient.scanDay != prevDay)):
                     # VRAAG AN HIER WRM ANDERS DAN ORIGINELE CODE
-                    prevScanEndTime = weekSchedule[patient.scanDay][patient.slotNr].startTime
+                    patient.scanTime = arrivalTime
                 # VRAAG AN WAAROM INSPRINGING HIER ANDERS DAN ORIGINELE CODE
                 elif(prevIsNoShow == True):
                     ## zal wel nog niet kloppen --> hangt af van Artur zijn invulling van zijn weekschedule
@@ -542,9 +542,7 @@ class simulation():
                 if((prevDay == 3) or (prevDay == 5)):
                     movingAvgOT[prevWeek] = movingAvgOT[prevWeek] + max(0.0, prevScanEndTime - 13)
                 else:
-                    print(prevScanEndTime - 17)
                     movingAvgOT[prevWeek] = movingAvgOT[prevWeek] + max(0.0, prevScanEndTime - 17)
-
                 if((prevDay == 3) or (prevDay == 5)):
                     avgOT += max(0.0, prevScanEndTime - 13)
                 else:
@@ -554,7 +552,7 @@ class simulation():
             if(prevWeek != patient.scanWeek):
                 movingAvgElectiveScanWT[prevWeek] = movingAvgElectiveScanWT[prevWeek]/numberOfPatientsWeek[0]
                 movingAvgUrgentScanWT[prevWeek] = movingAvgUrgentScanWT[prevWeek]/numberOfPatientsWeek[1]
-                movingAvgOT = movingAvgOT[prevWeek] / D
+                movingAvgOT[prevWeek] = movingAvgOT[prevWeek] / D
                 numberOfPatientsWeek[0] = 0
                 numberOfPatientsWeek[1] = 0
             
