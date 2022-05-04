@@ -173,17 +173,29 @@ class simulation():
                 
                 # B) for elective slots: appointment time depends on the RULE
                 else:
-                    if (rule == 1): # FIFO rule
+                    if (rule == 1):  # FIFO rule
                         weekSchedule[d][s].appTime = time
+                        weekSchedule[d][s].startTime = time  # define the start time of the slot
+                        time += slotLength  # update the time variable
+
                     elif (rule == 2):
-                        # TODO: Bailey-Welch rule
-                        return 0
+                        K = 2  # number of patients that are asigned to the first slot, can be adjusted
+                        if s in range(0, K):
+                            weekSchedule[d][d].appTime = time
+                        else:
+                            time += Normal_distribution(15,
+                                                        3)  # appoitment time of the previous patient + scan time will be the appoitment time of the next patient
+                            weekSchedule[d][s].appTime = time  # set this appoitment time
                     elif (rule == 3):
                         # TODO: Blocking rule
                         return 0
                     elif (rule == 4):
-                        # TODO: Benchmark rule
-                        return 0
+                        kAlpha = 0.5  # designates how much the possible deviations in the scan duration are taken into account, assumption
+                        SD = 3  # standard deviation is fixed
+                        if (weekSchedule[d][s].startTime - kAlpha * SD < 8):
+                            weekSchedule[d][S].appTime = 8
+                        else:
+                            weekSchedule[d][s].appTime = weekSchedule[d][s].startTime - kAlpha * SD
                 
                 # update the time variable
                 #print(weekSchedule[d][s].appTime)
