@@ -75,7 +75,7 @@ class simulation():
         avgUrgentScanWT, avgOT, numberOfElectivePatientsPlanned, numberOfUrgentPatientsPlanned, W, R, rule, weekSchedule
 
     # Method 1
-    inputFileName = "./data/input-S1-14.txt"
+    inputFileName = "./data/scenario1_14Slots.txt"
 
     # Method 2
     # inputFileName = inputFileName = "./data/scenario2_10Slots.txt"
