@@ -3,3 +3,5 @@ __pycache__/Helper.cpython-39.pyc
 __pycache__/Simulation.cpython-39.pyc
 .idea/misc.xml
 .idea/Simulation.iml
+*.xml
+*.iml
