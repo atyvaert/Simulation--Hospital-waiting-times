@@ -106,7 +106,7 @@ class simulation():
     # variables we have to SET OURSELVES
     W = 10      # number of weeks to simulate = runlength
     R = 100       # number of replications
-    rule = 1    # integer indicating which scheduling rule you are testing
+    rule =  4   # integer indicating which scheduling rule you are testing
 
     avgElectiveAppWT = 0
     avgElectiveScanWT = 0
@@ -178,29 +178,33 @@ class simulation():
                         weekSchedule[d][s].startTime = time  # define the start time of the slot
                         time += slotLength  # update the time variable
 
-                    elif (rule == 2):
+                    elif (rule == 2): # Bailey-Welch rule 
                         K = 2  # number of patients that are asigned to the first slot, can be adjusted
                         if s in range(0, K):
-                            weekSchedule[d][d].appTime = time
+                            weekSchedule[d][s].appTime = time
                         else:
                             time += Normal_distribution(15,
                                                         3)  # appoitment time of the previous patient + scan time will be the appoitment time of the next patient
                             weekSchedule[d][s].appTime = time  # set this appoitment time
-                    elif (rule == 3):
-                        # TODO: Blocking rule
-                        return 0
-                    elif (rule == 4):
+                    elif (rule == 3): # Blocking-Rule
+                        K = 2 # number of blocks, fixed
+                        if s in range(0,K):
+                            weekSchedule[d][s].appTime = time
+                        if s % K != 0:
+                            weekSchedule[d][s].appTime = time
+                        else:
+                            time += slotLength * K
+                            weekSchedule[d][s].appTime = time
+
+                    elif (rule == 4): # Benchmarking rule
                         kAlpha = 0.5  # designates how much the possible deviations in the scan duration are taken into account, assumption
                         SD = 3  # standard deviation is fixed
                         if (weekSchedule[d][s].startTime - kAlpha * SD < 8):
                             weekSchedule[d][S].appTime = 8
                         else:
                             weekSchedule[d][s].appTime = weekSchedule[d][s].startTime - kAlpha * SD
-                
-                # update the time variable
-                #print(weekSchedule[d][s].appTime)
-                time += slotLength
-                
+
+               
                 # skip to the end of the lunch break if it is lunch
                 if(time == 12):
                     time = 13
@@ -506,8 +510,8 @@ class simulation():
         self.generatePatients() # create patient arrival events (elective patients call, urgent patients arrive at the hospital)
         self.schedulePatients() # schedule urgent and elective patients in slots based on their arrival events => determine the appointment wait time
 
-        for patient in patients:
-            print(patient)
+        #for patient in patients:
+         #   print(patient)
 
         self.sortPatientsOnAppTime() # sort patients on their appointment time (unscheduled patients are grouped at the end of the list)
         prevWeek = 0
@@ -578,6 +582,7 @@ class simulation():
                 prevIsNoShow = False
             prevWeek = patient.scanWeek
             prevDay = patient.scanDay
+
         #update moving averages of the last week
         movingAvgElectiveScanWT[W-1] = movingAvgElectiveScanWT[W-1] / numberOfPatientsWeek[0]
         movingAvgUrgentScanWT[W-1] = movingAvgUrgentScanWT[W-1] / numberOfPatientsWeek[1]
