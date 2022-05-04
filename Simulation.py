@@ -250,7 +250,7 @@ class simulation():
                         callTime = arrivalTimeNext  # set call time, i.e. arrival event time
                         tardiness = Normal_distribution(meanTardiness,
                                                         stdevTardiness) / 60.0  # in practice this is not known yet at time  of call
-                        noShow = Bernouilli_distribution(probNoShow)  # in practice this is not known yet at time of call
+                        noShow = not bool(Bernouilli_distribution(probNoShow))  # in practice this is not known yet at time of call
                         duration = Normal_distribution(meanElectiveDuration,
                                                        stdevElectiveDuration) / 60.0  # in practice this is not known yet at time of call
 
@@ -490,12 +490,12 @@ class simulation():
 
     def runOneSimulation(self):
         global prevWeek, prevDay, numberOfPatientsWeek, numberOfPatients, arrivalTime, wt, prevScanEndTime, prevIsNoShow, \
-        avgUrgentScanWT, movingAvgOT, avgElectiveScanWT, movingAvgUrgentScanWT, movingAvgElectiveScanWT, avgOT
+        avgUrgentScanWT, movingAvgOT, avgElectiveScanWT, movingAvgUrgentScanWT, movingAvgElectiveScanWT, avgOT, D, W
         self.generatePatients() # create patient arrival events (elective patients call, urgent patients arrive at the hospital)
         self.schedulePatients() # schedule urgent and elective patients in slots based on their arrival events => determine the appointment wait time
 
         #for patient in patients:
-            #print(patient)
+         #   print(patient)
 
         self.sortPatientsOnAppTime() # sort patients on their appointment time (unscheduled patients are grouped at the end of the list)
         prevWeek = 0
@@ -505,6 +505,7 @@ class simulation():
         prevScanEndTime = float(0)
         prevIsNoShow = bool(False)
         for patient in patients:
+            #print(f'{patient.callWeek}, {patient.scanWeek}, {patient.isNoShow}, {patient.patientType}')
             if patient.scanWeek == -1:
                 break # stop at the first unplanned patient because we then have visited all scheduled patients
             arrivalTime = float(patient.appTime + patient.tardiness)
@@ -517,9 +518,9 @@ class simulation():
                 # VRAAG AN WAAROM INSPRINGING HIER ANDERS DAN ORIGINELE CODE
                 elif(prevIsNoShow == True):
                     ## zal wel nog niet kloppen --> hangt af van Artur zijn invulling van zijn weekschedule
-                    patient.scanTime = max(weekSchedule[patient.scanDay][patient.slotNr].startTime, max(prevScanEndTime, patient.arrivalTime))
+                    patient.scanTime = max(weekSchedule[patient.scanDay][patient.slotNr].startTime, max(prevScanEndTime, arrivalTime))
                 else:
-                    patient.scanTime = max(prevScanEndTime, patient.arrivalTime)
+                    patient.scanTime = max(prevScanEndTime, arrivalTime)
                 
                 wt = patient.getScanWT()
 
@@ -537,13 +538,14 @@ class simulation():
                 numberOfPatients[patient.patientType - 1] +=1
 
             #Overtime
-            if(prevDay > -1 and prevDay != patient.scanDay):
-                if(prevDay == 3 or prevDay == 5):
-                    movingAvgOT[prevWeek] += max(0.0, prevScanEndTime - 13)
+            if((prevDay > -1) and (prevDay != patient.scanDay)):
+                if((prevDay == 3) or (prevDay == 5)):
+                    movingAvgOT[prevWeek] = movingAvgOT[prevWeek] + max(0.0, prevScanEndTime - 13)
                 else:
-                    movingAvgOT[prevWeek] += max(0.0, prevScanEndTime - 17)
+                    print(prevScanEndTime - 17)
+                    movingAvgOT[prevWeek] = movingAvgOT[prevWeek] + max(0.0, prevScanEndTime - 17)
 
-                if(prevDay == 3 or prevDay == 5):
+                if((prevDay == 3) or (prevDay == 5)):
                     avgOT += max(0.0, prevScanEndTime - 13)
                 else:
                     avgOT += max(0.0, prevScanEndTime - 17)
@@ -559,7 +561,7 @@ class simulation():
             #set prev patient
             if(patient.isNoShow == True):
                 prevIsNoShow = True
-                if(patient.scanWeek != prevWeek or patient.scanDay != prevDay):
+                if((patient.scanWeek != prevWeek) or (patient.scanDay != prevDay)):
                     prevScanEndTime = weekSchedule[patient.scanDay][patient.slotNr].startTime
             else:
                 prevScanEndTime = patient.scanTime + patient.duration
@@ -567,15 +569,15 @@ class simulation():
             prevWeek = patient.scanWeek
             prevDay = patient.scanDay
 
-            #update moving averages of the last week
-            movingAvgElectiveScanWT[W-1] = movingAvgElectiveScanWT[W-1] / numberOfPatientsWeek[0]
-            movingAvgUrgentScanWT[W-1] = movingAvgUrgentScanWT[W-1] / numberOfPatientsWeek[1]
-            movingAvgOT[W-1] = movingAvgOT[W-1] / D
+        #update moving averages of the last week
+        movingAvgElectiveScanWT[W-1] = movingAvgElectiveScanWT[W-1] / numberOfPatientsWeek[0]
+        movingAvgUrgentScanWT[W-1] = movingAvgUrgentScanWT[W-1] / numberOfPatientsWeek[1]
+        movingAvgOT[W-1] = movingAvgOT[W-1] / D
     
-            #calculate objective values
-            avgElectiveScanWT = avgElectiveScanWT / numberOfPatients[0]
-            avgUrgentScanWT = avgUrgentScanWT / numberOfPatients[1]
-            avgOT = avgOT / (D * W)
+        #calculate objective values
+        avgElectiveScanWT = avgElectiveScanWT / numberOfPatients[0]
+        avgUrgentScanWT = avgUrgentScanWT / numberOfPatients[1]
+        avgOT = avgOT / (D * W)
 
             # print moving avg (UIT C++ CODE)
     # /*FILE *file = fopen("/Users/tinemeersman/Documents/project SMA 2022 student code /output-movingAvg.txt", "a"); // TODO: use your own directory
