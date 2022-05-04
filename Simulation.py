@@ -490,7 +490,7 @@ class simulation():
 
     def runOneSimulation(self):
         global prevWeek, prevDay, numberOfPatientsWeek, numberOfPatients, arrivalTime, wt, prevScanEndTime, prevIsNoShow, \
-        avgUrgentScanWT, avgUrgentScanWT
+        avgUrgentScanWT, movingAvgOT, avgElectiveScanWT, movingAvgUrgentScanWT, movingAvgElectiveScanWT, avgOT
         self.generatePatients() # create patient arrival events (elective patients call, urgent patients arrive at the hospital)
         self.schedulePatients() # schedule urgent and elective patients in slots based on their arrival events => determine the appointment wait time
 
@@ -504,10 +504,7 @@ class simulation():
         numberOfPatients = [0,0]
         prevScanEndTime = float(0)
         prevIsNoShow = bool(False)
-        counter = 0
         for patient in patients:
-            print(counter)
-            counter = counter + 1
             if patient.scanWeek == -1:
                 break # stop at the first unplanned patient because we then have visited all scheduled patients
             arrivalTime = float(patient.appTime + patient.tardiness)
@@ -518,18 +515,18 @@ class simulation():
                     # VRAAG AN HIER WRM ANDERS DAN ORIGINELE CODE
                     prevScanEndTime = weekSchedule[patient.scanDay][patient.slotNr].startTime
                 # VRAAG AN WAAROM INSPRINGING HIER ANDERS DAN ORIGINELE CODE
-                if(prevIsNoShow == True):
+                elif(prevIsNoShow == True):
                     ## zal wel nog niet kloppen --> hangt af van Artur zijn invulling van zijn weekschedule
                     patient.scanTime = max(weekSchedule[patient.scanDay][patient.slotNr].startTime, max(prevScanEndTime, patient.arrivalTime))
                 else:
                     patient.scanTime = max(prevScanEndTime, patient.arrivalTime)
                 
                 wt = patient.getScanWT()
+
                 if(patient.patientType == 1):
                     movingAvgElectiveScanWT[patient.scanWeek] += wt
                 else:
                     movingAvgUrgentScanWT[patient.scanWeek] += wt
-                
                 numberOfPatientsWeek[patient.patientType -1] +=1
 
                 if(patient.patientType == 1):
