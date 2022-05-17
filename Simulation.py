@@ -71,7 +71,7 @@ class simulation():
     global inputFileName, D, amountOTSlotsPerDay, S, slotLength, lambdaElective, meanTardiness, stdevTardiness, probNoShow, meanElectiveDuration, \
         stdevElectiveDuration, lambdaUrgent, probUrgentType, cumulativeProbUrgentType, meanUrgentDuration, stdevUrgentDuration, weightEl, weightUr, \
         d, s, w, r, patients, patient, movingAvgElectiveAppWT, movingAvgElectiveScanWT, movingAvgUrgentScanWT, movingAvgOT, avgElectiveAppWT, avgElectiveScanWT, \
-        avgUrgentScanWT, avgOT, numberOfElectivePatientsPlanned, numberOfUrgentPatientsPlanned, W, R, rule, weekSchedule
+        avgUrgentScanWT, avgOT, numberOfElectivePatientsPlanned, numberOfUrgentPatientsPlanned, W, R, rule, weekSchedule, Warm_Up
 
     #(un)comment the strategy you want to use   
     # Method 1
@@ -92,7 +92,8 @@ class simulation():
     #inputFileName = "./data/scenario3_12Slots.txt"
     #inputFileName = "./data/scenario3_16Slots.txt"
     #inputFileName = "./data/scenario3_20Slots.txt"
-    
+
+    Warm_Up = 150
     D = 6                           # number of days per week (NOTE: Sunday not included! so do NOT use to calculate appointment waiting time)
     amountOTSlotsPerDay = 10        # number of overtime slots per day
     S = 32 + amountOTSlotsPerDay    # number of slots per day
@@ -567,13 +568,13 @@ class simulation():
 
     # method called by the main (starts the whole simulation process):
     def runSimulations(self):
-        global avgOT, avgElectiveAppWT, avgElectiveScanWT, avgUrgentScanWT, arrivalTime_seed, run, setWeekSchedule_seed, appel
+        global avgOT, avgElectiveAppWT, avgElectiveScanWT, avgUrgentScanWT, arrivalTime_seed, run, setWeekSchedule_seed, appel, movingAvgElectiveAppWT, \
+        movingAvgElectiveScanWT, movingAvgUrgentScanWT, movingAvgOT, Warm_Up
         electiveAppWT = 0
         electiveScanWT = 0
         urgentScanWT = 0
         OT = 0
         OV = 0
-
 
         # first set weekSchedule by filling in 2D slot array
         setWeekSchedule_seed = np.random.RandomState(40)
@@ -586,29 +587,45 @@ class simulation():
             self.resetSystem()  # 2) reset all variables related to 1 replication
             arrivalTime_seed = np.random.RandomState((r+333) * 51 + 5)
             self.runOneSimulation()  # 3) run 1 simulation / replication
-            electiveAppWT = electiveAppWT + avgElectiveAppWT
-            electiveScanWT = electiveScanWT + avgElectiveScanWT
-            urgentScanWT = avgUrgentScanWT + urgentScanWT
-            OT = avgOT + OT
-            OV = OV + (avgElectiveAppWT / weightEl + avgUrgentScanWT / weightUr)
-            values_to_add = {'r': r, 'elAppWT': avgElectiveAppWT, 'elScanWT': avgElectiveScanWT,
-                             'urScanWT': avgUrgentScanWT, 'OT': avgOT,
-                             'OV': avgElectiveAppWT * weightEl + avgUrgentScanWT * weightUr}
+            avgElectiveAppWT_SS = 0
+            avgElectiveScanWT_SS = 0
+            avgUrgentScanWT_SS = 0
+            avgOT_SS = 0
+            for w in range(Warm_Up,W):
+                avgElectiveAppWT_SS = avgElectiveAppWT_SS + movingAvgElectiveAppWT[w]
+                avgElectiveScanWT_SS = avgElectiveScanWT_SS + movingAvgElectiveScanWT[w]
+                avgUrgentScanWT_SS = avgUrgentScanWT_SS + movingAvgUrgentScanWT[w]
+                avgOT_SS = avgOT_SS + movingAvgOT[w]
+
+            avgElectiveAppWT_SS= avgElectiveAppWT_SS / (W - Warm_Up)
+            avgElectiveScanWT_SS = avgElectiveScanWT_SS / (W - Warm_Up)
+            avgUrgentScanWT_SS = avgUrgentScanWT_SS / (W - Warm_Up)
+            avgOT_SS = avgOT_SS / (W - Warm_Up)
+            OV_SS = avgElectiveAppWT_SS * weightEl + avgUrgentScanWT_SS * weightUr
+
+            #electiveAppWT = electiveAppWT + avgElectiveAppWT
+            #electiveScanWT = electiveScanWT + avgElectiveScanWT
+            #urgentScanWT = avgUrgentScanWT + urgentScanWT
+            #OT = avgOT + OT
+            #OV = avgElectiveAppWT_SS * weightEl + avgUrgentScanWT_SS * weightUr
+            values_to_add = {'r': r, 'elAppWT': avgElectiveAppWT_SS, 'elScanWT': avgElectiveScanWT_SS,
+                             'urScanWT': avgUrgentScanWT_SS, 'OT': avgOT_SS,
+                             'OV': OV_SS}
             row_to_add = pd.Series(values_to_add, name="run " + str(r))
             output = output.append(row_to_add)
             appel += 1
 
-        electiveAppWT = electiveAppWT / R
-        electiveScanWT = electiveScanWT / R
-        urgentScanWT = urgentScanWT / R
-        OT = OT / R
-        OV = OV / R
-        objectiveValue = electiveAppWT * weightEl + urgentScanWT * weightUr
-        values_to_add = {'r': r, 'elAppWT': electiveAppWT, 'urScanWT': urgentScanWT, 'elScanWT': electiveScanWT,
-                         'OT': OT,
-                         'OV': objectiveValue}
-        row_to_add = pd.Series(values_to_add, name="Average")
-        output = output.append(row_to_add)
-        path = "./data/output_correct/output_Strategy3b_10_FIFO.xlsx"
-        output.to_excel(path, sheet_name='output')
-        #print(output)
+        #electiveAppWT = electiveAppWT / R
+        #electiveScanWT = electiveScanWT / R
+        #urgentScanWT = urgentScanWT / R
+        #OT = OT / R
+        #OV = OV / R
+        #objectiveValue = electiveAppWT * weightEl + urgentScanWT * weightUr
+        #values_to_add = {'r': r, 'elAppWT': electiveAppWT, 'urScanWT': urgentScanWT, 'elScanWT': electiveScanWT,
+        #                 'OT': OT,
+        #                 'OV': objectiveValue}
+        #row_to_add = pd.Series(values_to_add, name="Average")
+        #output = output.append(row_to_add)
+        #path = "./data/output_correct/output_Strategy3b_10_FIFO.xlsx"
+        #output.to_excel(path, sheet_name='output')
+        print(output)
