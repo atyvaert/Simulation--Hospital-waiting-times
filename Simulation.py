@@ -76,7 +76,7 @@ class simulation():
     #(un)comment the strategy you want to use   
     # Method 1
     #inputFileName = "./data/scenario1_14Slots.txt"
-    #inputFileName = "./data/scenario1_10Slots.txt"
+    inputFileName = "./data/scenario1_10Slots.txt"
     #inputFileName = "./data/scenario1_20Slots.txt"
     #inputFileName = "./data/scenario1_16Slots.txt"
 
@@ -88,7 +88,7 @@ class simulation():
     #inputFileName = "./data/scenario2_20Slots.txt"
 
     # Method 3
-    inputFileName = "./data/scenario3_10Slots.txt"
+    #inputFileName = "./data/scenario3_10Slots.txt"
     #inputFileName = "./data/scenario3_12Slots.txt"
     #inputFileName = "./data/scenario3_16Slots.txt"
     #inputFileName = "./data/scenario3_20Slots.txt"
@@ -113,8 +113,8 @@ class simulation():
 
     
     # variables we have to SET OURSELVES
-    W = 10      # number of weeks to simulate = runlength
-    R = 26      # number of replications
+    W = 300      # number of weeks to simulate = runlength
+    R = 5        # number of replications
     rule = 1    # integer indicating which scheduling rule you are testing
 
     avgElectiveAppWT = 0
@@ -236,7 +236,6 @@ class simulation():
         # go over each week and each day and generate a patient list depending on the day
         run = 0
         for w in range(0,W):
-            arrivalTime_seed = np.random.RandomState((seed_variable +  w) * 51 + 5)
             for d in range(0,D):  # not on Sunday
                 # generate ELECTIVE patients for this day
                 if d < D - 1:  # not on Saturday either
@@ -404,7 +403,6 @@ class simulation():
                         else:
                             day[i] = 0
                             week[i] = week[i] + 1
-                        
                         # find the first slot on the next day (if within the planning horizon)
                         if(week[i] < W):
                             slot[i] = self.getNextSlotNrFromTime(day[i], patient.patientType, 0)
@@ -423,7 +421,6 @@ class simulation():
                         movingAvgElectiveAppWT[previousWeek] = movingAvgElectiveAppWT[previousWeek] / numberOfElectivePerWeek
                         numberOfElectivePerWeek = 0
                         previousWeek = week[i]
-
 
                     wt = patient.getAppWT()
                     movingAvgElectiveAppWT[week[i]] = movingAvgElectiveAppWT[week[i]] + wt
@@ -475,7 +472,7 @@ class simulation():
 
     def runOneSimulation(self):
         global prevWeek, prevDay,run, numberOfPatientsWeek, numberOfPatients, arrivalTime, wt, prevScanEndTime, prevIsNoShow, \
-            avgUrgentScanWT, movingAvgOT, avgElectiveScanWT,arrivalTime_seed, movingAvgUrgentScanWT, movingAvgElectiveScanWT, avgOT, D, W, movingAvgElectiveAppWT
+            avgUrgentScanWT, movingAvgOT, avgElectiveScanWT,arrivalTime_seed, movingAvgUrgentScanWT, movingAvgElectiveScanWT, avgOT, D, W, movingAvgElectiveAppWT, r, R
 
         self.generatePatients() # create patient arrival events (elective patients call, urgent patients arrive at the hospital)
         self.schedulePatients() # schedule urgent and elective patients in slots based on their arrival events => determine the appointment wait time
@@ -535,6 +532,7 @@ class simulation():
                 movingAvgOT[prevWeek] = movingAvgOT[prevWeek] / D
                 numberOfPatientsWeek[0] = 0
                 numberOfPatientsWeek[1] = 0
+
             
             #set prev patient
             if(patient.isNoShow == True):
@@ -564,16 +562,18 @@ class simulation():
                              'urScanWT': movingAvgUrgentScanWT[w], 'OT': movingAvgOT[w]}
             row_to_add = pd.Series(values_to_add, name="Average")
             output_average = output_average.append(row_to_add)
+        path = "./data/output_correct/moving_average_10_FIFO_R" + str(appel) + ".xlsx"
+        output_average.to_excel(path, sheet_name='output')
 
     # method called by the main (starts the whole simulation process):
     def runSimulations(self):
-        global avgOT, avgElectiveAppWT, avgElectiveScanWT, avgUrgentScanWT, arrivalTime_seed, run, setWeekSchedule_seed, seed_variable
+        global avgOT, avgElectiveAppWT, avgElectiveScanWT, avgUrgentScanWT, arrivalTime_seed, run, setWeekSchedule_seed, appel
         electiveAppWT = 0
         electiveScanWT = 0
         urgentScanWT = 0
         OT = 0
         OV = 0
-        seed_variable = 0
+
 
         # first set weekSchedule by filling in 2D slot array
         setWeekSchedule_seed = np.random.RandomState(40)
@@ -581,10 +581,10 @@ class simulation():
         column_names = ["r", "elAppWT", "elScanWT", "urScanWT", "OT", "OV"]
         output = pd.DataFrame(columns=column_names)
         # run R replications
-
+        appel = 0
         for r in range(0, R):
-            seed_variable += 1
             self.resetSystem()  # 2) reset all variables related to 1 replication
+            arrivalTime_seed = np.random.RandomState((r+333) * 51 + 5)
             self.runOneSimulation()  # 3) run 1 simulation / replication
             electiveAppWT = electiveAppWT + avgElectiveAppWT
             electiveScanWT = electiveScanWT + avgElectiveScanWT
@@ -593,16 +593,17 @@ class simulation():
             OV = OV + (avgElectiveAppWT / weightEl + avgUrgentScanWT / weightUr)
             values_to_add = {'r': r, 'elAppWT': avgElectiveAppWT, 'elScanWT': avgElectiveScanWT,
                              'urScanWT': avgUrgentScanWT, 'OT': avgOT,
-                             'OV': avgElectiveAppWT / weightEl + avgUrgentScanWT / weightUr}
+                             'OV': avgElectiveAppWT * weightEl + avgUrgentScanWT * weightUr}
             row_to_add = pd.Series(values_to_add, name="run " + str(r))
             output = output.append(row_to_add)
+            appel += 1
 
         electiveAppWT = electiveAppWT / R
         electiveScanWT = electiveScanWT / R
         urgentScanWT = urgentScanWT / R
         OT = OT / R
         OV = OV / R
-        objectiveValue = electiveAppWT / weightEl + urgentScanWT / weightUr
+        objectiveValue = electiveAppWT * weightEl + urgentScanWT * weightUr
         values_to_add = {'r': r, 'elAppWT': electiveAppWT, 'urScanWT': urgentScanWT, 'elScanWT': electiveScanWT,
                          'OT': OT,
                          'OV': objectiveValue}
@@ -610,4 +611,4 @@ class simulation():
         output = output.append(row_to_add)
         path = "./data/output_correct/output_Strategy3b_10_FIFO.xlsx"
         output.to_excel(path, sheet_name='output')
-        print(output)
+        #print(output)
