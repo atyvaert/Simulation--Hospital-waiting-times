@@ -563,8 +563,8 @@ class simulation():
                              'urScanWT': movingAvgUrgentScanWT[w], 'OT': movingAvgOT[w]}
             row_to_add = pd.Series(values_to_add, name="Average")
             output_average = output_average.append(row_to_add)
-        path = "./data/output_correct/moving_average_10_FIFO_R" + str(appel) + ".xlsx"
-        output_average.to_excel(path, sheet_name='output')
+        #path = "./data/output_correct/moving_average_10_FIFO_R" + str(appel) + ".xlsx"
+        #output_average.to_excel(path, sheet_name='output')
 
     # method called by the main (starts the whole simulation process):
     def runSimulations(self):
