@@ -8,7 +8,7 @@ An Bouckaert 01702258 an.bouckaert@ugent.be
 
 Tom Vander Stichele 01700453 tom.vanderstichele@ugent.be
 
-Gilles Declercq 01710087 gilles.declercq@ugent.be
+Gilles Declercq 01800155 gilles.declercq@ugent.be
 
 Artur Tyvaert 01706871 artur.tyvaert@ugent.be
 
